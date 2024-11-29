@@ -1,0 +1,58 @@
+name: night_trips
+description: "A new Flutter project."
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+
+version: 1.0.1+2
+
+environment:
+  sdk: '>=2.19.4 <4.0.0'
+
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.6
+  fluttertoast: ^8.0.9
+  shared_preferences: ^2.0.6
+  url_launcher: ^6.1.0
+  http: ^0.13.6
+  screenshot: ^3.0.0
+  share_plus: ^6.3.4
+  path_provider: ^2.0.11
+  uuid: ^4.4.0
+  package_info_plus: ^3.1.0
+  provider: ^6.0.0
+  intl: ^0.19.0
+  image_picker: ^1.0.2
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+
+  flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/logo.jpg"
+  adaptive_icon_background: "#FFFFFFFF"
+  adaptive_icon_foreground: "assets/images/logo.jpg"
+
+flutter:
+  fonts:
+    - family: ab
+      fonts:
+        - asset: assets/fonts/abhaya_libre_extrabold.ttf
+    - family: eb
+      fonts:
+        - asset: assets/fonts/eb_garamond.ttf
+
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/fonts/
