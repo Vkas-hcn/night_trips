@@ -1,16 +1,18 @@
-import 'dart:io';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:night_trips/AddPage.dart';
 import 'package:night_trips/data/DataSetGet.dart';
 import 'package:night_trips/data/DataUtils.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:night_trips/data/RecordBean.dart';
 
-import 'cus/CustomDialog.dart';
+import 'cus/ImageDialog.dart';
 
 class DetailPage extends StatefulWidget {
-  const DetailPage({super.key});
+  final RecordBean recordBean;
+
+  const DetailPage({super.key, required this.recordBean});
 
   @override
   State<DetailPage> createState() => _DetailPageState();
@@ -19,13 +21,17 @@ class DetailPage extends StatefulWidget {
 class _DetailPageState extends State<DetailPage> {
   int indexBg = 0;
   bool showImage = false;
-
+  List<String> bgImageList = [];
   final feelController = TextEditingController();
-
+  late RecordBean _currentRecordBean; // 新增的可变变量
   @override
   void initState() {
     super.initState();
     feelController.addListener(showWeightController);
+    _currentRecordBean = widget.recordBean; // 初始化新变量
+    setState(() {
+      bgImageList = List<String>.from(json.decode(_currentRecordBean.bgList));
+    });
   }
 
   void showWeightController() async {
@@ -37,6 +43,40 @@ class _DetailPageState extends State<DetailPage> {
     super.dispose();
   }
 
+  void backRefFun() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddPage(recordBean: _currentRecordBean),
+      ),
+    );
+
+    // 检查返回值是否有效，并且确保类型为 RecordBean
+    if (result != null && result is RecordBean) {
+      print("object-result: ${result.information}");
+
+      setState(() {
+        _currentRecordBean = result; // 更新 _currentRecordBean
+        bgImageList = List<String>.from(json.decode(_currentRecordBean.bgList)); // 更新背景图片列表
+      });
+    } else {
+      print("Result is not of type RecordBean or is null");
+    }
+  }
+
+
+  void showImageDialog(BuildContext context, int index) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return ImageDialog(
+          img: bgImageList[index],
+          onClose: () {},
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -46,158 +86,133 @@ class _DetailPageState extends State<DetailPage> {
       },
       child: Scaffold(
         resizeToAvoidBottomInset: true,
-        body: Stack(
-          children: [
-            SingleChildScrollView(
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              physics: const BouncingScrollPhysics(),
-              child: Container(
-                decoration: const BoxDecoration(
-                  image: DecorationImage(
-                    image: AssetImage('assets/images/bg_main.webp'),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.only(
-                      top: 56, right: 20, left: 20, bottom: 20),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.max,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.pop(context);
-                            },
-                            child: SizedBox(
-                              width: 32,
-                              height: 32,
-                              child: Image.asset('assets/images/ic_back.webp'),
-                            ),
-                          ),
-                          SizedBox(
-                            width: 32,
-                            height: 32,
-                            child: Image.asset('assets/images/ic_edit.webp'),
-                          )
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      Column(
-                        children: [
-                          SizedBox(
-                            width: 56,
-                            height: 56,
-                            child: Image.asset(DataUtils.imagesFeeling[1]),
-                          ),
-                          SizedBox(
-                            width: 202,
-                            height: 42,
-                            child: Image.asset('assets/images/bg_feel_b.webp'),
-                          )
-                        ],
-                      ),
-                      Container(
-                        width: double.infinity,
-                        height: 531,
-                        decoration: const BoxDecoration(
-                          image: DecorationImage(
-                            image: AssetImage('assets/images/bg_detail.webp'),
-                            fit: BoxFit.fill,
-                          ),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0, vertical: 20),
-                          child: Column(
-                            children: [
-                              const Text(
-                                textAlign: TextAlign.start,
-                                'Start writing down your feelings and experiences now.Start writing down your feelings and experiences now.Start writing down your feelings and experiences now.Start writing down your feelings and experiences now.Start writing down your feelings and experiences now.Start writing down your feelings and experiences now.',
-                                style: TextStyle(
-                                  fontFamily: 'eb',
-                                  fontSize: 12,
-                                  color: Color(0xFF8ABBF3),
-                                ),
-                              ),
-                              Expanded(
-                                child: SizedBox(
-                                  height: 103,
-                                  child: ListView.builder(
-                                    scrollDirection: Axis.horizontal,
-                                    itemCount:
-                                        DataSetGet.getBgImageView().length,
-                                    itemBuilder: (context, index) {
-                                      return GestureDetector(
-                                        onTap: () {
-                                          setState(() {
-                                            indexBg = index;
-                                            showImage = true;
-                                          });
-                                        },
-                                        child: Container(
-                                          margin:
-                                              const EdgeInsets.only(right: 8.0),
-                                          child: Center(
-                                            child: CustomCircle(
-                                              img: DataSetGet.getBgImageView()[
-                                                  index],
-                                            ),
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ),
-                              ),
-                              const Row(
-                                children: [
-                                  Spacer(),
-                                  Text(
-                                    textAlign: TextAlign.start,
-                                    '2024-11-07  Sun',
-                                    style: TextStyle(
-                                      fontFamily: 'eb',
-                                      fontSize: 14,
-                                      color: Color(0xFFACB1C6),
-                                    ),
-                                  ),
-                                ],
-                              )
-                            ],
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 24)
-                    ],
-                  ),
-                ),
+        body: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          physics: const BouncingScrollPhysics(),
+          child: Container(
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/images/bg_main.webp'),
+                fit: BoxFit.cover,
               ),
             ),
-            //全屏图片
-            if (showImage)
-              GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      showImage = false;
-                    });
-                  },
-                  child: Center(
-                    child: Container(
-                        width: 327,
-                        height: 562,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF000000),
-                          image: DecorationImage(
-                            image: AssetImage(
-                                DataSetGet.getBgImageView()[indexBg]),
-                            fit: BoxFit.fill,
+            child: Padding(
+              padding: const EdgeInsets.only(
+                  top: 56, right: 20, left: 20, bottom: 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.pop(context);
+                        },
+                        child: SizedBox(
+                          width: 32,
+                          height: 32,
+                          child: Image.asset('assets/images/ic_back.webp'),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          backRefFun();
+                        },
+                        child: SizedBox(
+                          width: 32,
+                          height: 32,
+                          child: Image.asset('assets/images/ic_edit.webp'),
+                        ),
+                      )
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Column(
+                    children: [
+                      SizedBox(
+                        width: 56,
+                        height: 56,
+                        child: Image.asset(
+                            DataUtils.imagesFeeling[_currentRecordBean.feeling]),
+                      ),
+                      SizedBox(
+                        width: 202,
+                        height: 42,
+                        child: Image.asset('assets/images/bg_feel_b.webp'),
+                      )
+                    ],
+                  ),
+                  Container(
+                    width: double.infinity,
+                    height: 531,
+                    decoration: const BoxDecoration(
+                      image: DecorationImage(
+                        image: AssetImage('assets/images/bg_detail.webp'),
+                        fit: BoxFit.fill,
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0, vertical: 20),
+                      child: Column(
+                        children: [
+                          Text(
+                            textAlign: TextAlign.start,
+                            _currentRecordBean.information,
+                            style: const TextStyle(
+                              fontFamily: 'eb',
+                              fontSize: 12,
+                              color: Color(0xFF8ABBF3),
+                            ),
                           ),
-                        )),
-                  ))
-          ],
+                          Expanded(
+                            child: SizedBox(
+                              height: 103,
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: bgImageList.length,
+                                itemBuilder: (context, index) {
+                                  return GestureDetector(
+                                    onTap: () {
+                                      showImageDialog(context, index);
+                                    },
+                                    child: Container(
+                                      margin: const EdgeInsets.only(right: 8.0),
+                                      child: Center(
+                                        child: CustomCircle(
+                                          img: bgImageList[index],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              Spacer(),
+                              Text(
+                                textAlign: TextAlign.start,
+                                "${RecordBean.getTimeFromTimestamp(_currentRecordBean.date)} ${DataUtils.textFeeling[_currentRecordBean.feeling]}",
+                                style: const TextStyle(
+                                  fontFamily: 'eb',
+                                  fontSize: 14,
+                                  color: Color(0xFFACB1C6),
+                                ),
+                              ),
+                            ],
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 24)
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );

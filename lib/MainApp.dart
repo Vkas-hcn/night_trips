@@ -4,9 +4,12 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:night_trips/DetailPage.dart';
 import 'package:night_trips/data/DataSetGet.dart';
 import 'package:night_trips/data/DataUtils.dart';
+import 'package:night_trips/data/RecordBean.dart';
+import 'package:night_trips/sleep/SleepPage.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'AddPage.dart';
+import 'RecordPage.dart';
 import 'cus/RecordManager.dart';
 
 class MainApp extends StatefulWidget {
@@ -36,6 +39,46 @@ class _MainAppState extends State<MainApp> {
     setState(() {});
   }
 
+  void backRefFun(int index) async {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            DetailPage(recordBean: RecordManager.events[index]),
+      ),
+    ).then((value) {
+      getListData();
+    });
+  }
+
+  void goRecordPage() async {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const RecordPage(),
+      ),
+    ).then((value) {
+      getListData();
+    });
+  }
+
+  void goAddPage()  {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const AddPage(),
+      ),
+    );
+  }
+
+  void goSleepPage()  {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const SleepPage(),
+      ),
+    );
+  }
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -47,11 +90,11 @@ class _MainAppState extends State<MainApp> {
         endDrawer: Drawer(
           width: 233,
           child: Container(
-            color: Color(0xFF040A25),
+            color: const Color(0xFF040A25),
             child: ListView(
-              padding: EdgeInsets.only(right: 40),
+              padding: const EdgeInsets.only(right: 40),
               children: <Widget>[
-                SizedBox(height: 100),
+                const SizedBox(height: 100),
                 Align(
                   alignment: Alignment.centerRight,
                   child: SizedBox(
@@ -173,12 +216,7 @@ class _MainAppState extends State<MainApp> {
                     padding: const EdgeInsets.symmetric(horizontal: 20.0),
                     child: GestureDetector(
                       onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const AddPage(),
-                          ),
-                        );
+                        goAddPage();
                       },
                       child: Container(
                         width: double.infinity,
@@ -208,64 +246,70 @@ class _MainAppState extends State<MainApp> {
                   const SizedBox(height: 12),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                    child: Container(
-                      width: double.infinity,
-                      decoration: const BoxDecoration(
-                        image: DecorationImage(
-                          image: AssetImage('assets/images/bg_sleep.webp'),
-                          fit: BoxFit.fill,
+                    child: GestureDetector(
+                      onTap: () {
+                        goSleepPage();
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        decoration: const BoxDecoration(
+                          image: DecorationImage(
+                            image: AssetImage('assets/images/bg_sleep.webp'),
+                            fit: BoxFit.fill,
+                          ),
                         ),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16.0, vertical: 16),
-                        child: Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Column(
-                              children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      decoration: BoxDecoration(
-                                        color: Color(0xFF59B710),
-                                        borderRadius: BorderRadius.circular(13),
-                                      ),
-                                      child: const Padding(
-                                        padding: EdgeInsets.symmetric(
-                                            horizontal: 15.0, vertical: 5),
-                                        child: Text(
-                                          'Sleep relaxation',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: Color(0xFFFFFFFF),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0, vertical: 16),
+                          child: Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                children: [
+                                  Row(
+                                    children: [
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          color: Color(0xFF59B710),
+                                          borderRadius: BorderRadius.circular(13),
+                                        ),
+                                        child: const Padding(
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 15.0, vertical: 5),
+                                          child: Text(
+                                            'Sleep relaxation',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Color(0xFFFFFFFF),
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                    Spacer(),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                const Text(
-                                  'Relax your body and mind, let music help you sleep, and enjoy every dream.',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Color(0xFFFFFFFF),
+                                      Spacer(),
+                                    ],
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(height: 8),
+                                  const Text(
+                                    'Relax your body and mind, let music help you sleep, and enjoy every dream.',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFFFFFFFF),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                  const Padding(
-                    padding: EdgeInsets.only(left: 20.0, right: 20, top: 20),
+                  Padding(
+                    padding:
+                        const EdgeInsets.only(left: 20.0, right: 20, top: 20),
                     child: Row(
                       children: [
-                        Text(
+                        const Text(
                           'Record',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
@@ -273,18 +317,24 @@ class _MainAppState extends State<MainApp> {
                             color: Color(0xFF59B710),
                           ),
                         ),
-                        Spacer(),
-                        Text(
-                          'more >',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Color(0xFF7CC0FD),
+                        const Spacer(),
+                        GestureDetector(
+                          onTap: () {
+                            goRecordPage();
+                          },
+                          child: const Text(
+                            'more >',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFF7CC0FD),
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 16),
+                  if(RecordManager.events.isNotEmpty)
                   Expanded(
                     child: SingleChildScrollView(
                       child: ListView.builder(
@@ -295,12 +345,7 @@ class _MainAppState extends State<MainApp> {
                         itemBuilder: (context, index) {
                           return GestureDetector(
                             onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const DetailPage(),
-                                ),
-                              );
+                              backRefFun(index);
                             },
                             child: Padding(
                               padding: const EdgeInsets.symmetric(
@@ -328,10 +373,11 @@ class _MainAppState extends State<MainApp> {
                                                 children: [
                                                   Container(
                                                     decoration: BoxDecoration(
-                                                      color:
-                                                          const Color(0xFF038DDB),
+                                                      color: const Color(
+                                                          0xFF038DDB),
                                                       borderRadius:
-                                                          BorderRadius.circular(10),
+                                                          BorderRadius.circular(
+                                                              10),
                                                     ),
                                                     child: Padding(
                                                       padding: const EdgeInsets
@@ -345,7 +391,8 @@ class _MainAppState extends State<MainApp> {
                                                                 .weather],
                                                         style: const TextStyle(
                                                           fontSize: 12,
-                                                          color: Color(0xFFFFFFFF),
+                                                          color:
+                                                              Color(0xFFFFFFFF),
                                                         ),
                                                       ),
                                                     ),
@@ -355,7 +402,8 @@ class _MainAppState extends State<MainApp> {
                                                     decoration: BoxDecoration(
                                                       color: Color(0xFF59B710),
                                                       borderRadius:
-                                                          BorderRadius.circular(10),
+                                                          BorderRadius.circular(
+                                                              10),
                                                     ),
                                                     child: Padding(
                                                       padding: const EdgeInsets
@@ -369,7 +417,8 @@ class _MainAppState extends State<MainApp> {
                                                                 .feeling],
                                                         style: const TextStyle(
                                                           fontSize: 12,
-                                                          color: Color(0xFFFFFFFF),
+                                                          color:
+                                                              Color(0xFFFFFFFF),
                                                         ),
                                                       ),
                                                     ),
@@ -383,7 +432,7 @@ class _MainAppState extends State<MainApp> {
                                                       .information,
                                                   maxLines: 3,
                                                   overflow:
-                                                  TextOverflow.ellipsis,
+                                                      TextOverflow.ellipsis,
                                                   style: const TextStyle(
                                                     fontSize: 12,
                                                     color: Color(0xFFFFFFFF),
@@ -397,8 +446,9 @@ class _MainAppState extends State<MainApp> {
                                             children: [
                                               Spacer(),
                                               Text(
-                                                RecordManager
-                                                    .events[index].date,
+                                                RecordBean.getTimeFromTimestamp(
+                                                    RecordManager
+                                                        .events[index].date),
                                                 style: const TextStyle(
                                                   fontSize: 10,
                                                   color: Color(0xFFACB1C6),
@@ -417,7 +467,50 @@ class _MainAppState extends State<MainApp> {
                         },
                       ),
                     ),
-                  )
+                  ),
+                  if(RecordManager.events.isEmpty)
+                  Column(
+                    children: [
+                      SizedBox(
+                        width: 140,
+                        height: 140,
+                        child: Image.asset('assets/images/ic_emp_data.webp'),
+                      ),
+                      const Text(
+                        'There are no diary entries recorded here yet. Start recording now!',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFFFFFFFF),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 48),
+                        child: GestureDetector(
+                          onTap: () {
+                            goAddPage();
+                          },
+                          child: Container(
+                            width: 243,
+                            height: 56,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF31429D),
+                              borderRadius: BorderRadius.circular(36),
+                            ),
+                            child: const Center(
+                              child: Text(
+                                'GO',
+                                style: TextStyle(
+                                  color: Color(0xFFFFFFFF),
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                    ],
+                  ),
                 ],
               ),
             ]),

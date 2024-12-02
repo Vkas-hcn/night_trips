@@ -64,4 +64,10 @@ class RecordBean {
     // Update the date to the next valid occurrence
     date = DateFormat('yyyy-MM-dd HH:mm:ss').format(eventDate);
   }
+
+  static String getTimeFromTimestamp(String timestampString) {
+    int timestamp = int.parse(timestampString);
+    DateTime dateTime = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+    return DateFormat('yyyy-MM-dd').format(dateTime);
+  }
 }

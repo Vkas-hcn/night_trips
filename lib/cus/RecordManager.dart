@@ -1,9 +1,10 @@
 import 'dart:convert';
 
+import 'package:intl/intl.dart';
+import 'package:night_trips/data/DataUtils.dart';
 import 'package:night_trips/data/RecordBean.dart';
 
 import '../data/LocalStorage.dart';
-
 
 class RecordManager {
   static List<RecordBean> events = [];
@@ -19,21 +20,6 @@ class RecordManager {
     // 将 events 转换成 JSON 字符串
     String jsonString = json.encode(events.map((e) => e.toJson()).toList());
     await LocalStorage().setValue(LocalStorage.dateList, jsonString);
-  }
-
-  // 从本地存储读取并解析成List<RecordBean>
-  static Future<void> loadRecords2() async {
-    // 从本地存储读取 JSON 字符串
-    String? jsonString = await LocalStorage().getValue(LocalStorage.dateList);
-    if (jsonString != null) {
-      // 将 JSON 字符串解析为 List<Map<String, dynamic>>
-      List<dynamic> jsonData = json.decode(jsonString);
-      print("jsonString---->${jsonString}");
-      //根据重复模式修改数据
-
-      // 将每个 JSON 对象解析为 RecordBean 实例，并添加到 events 数组
-      events = jsonData.map((e) => RecordBean.fromJson(e)).toList();
-    }
   }
 
   static Future<void> loadRecords() async {
@@ -77,5 +63,50 @@ class RecordManager {
   static void deleteRecord(String eventId) {
     events.removeWhere((event) => event.id == eventId);
     saveRecords(); // 保存更改后的事件数组
+  }
+
+  // 获取情绪统计数据
+  static Map<String, int> getFeelingStatistics() {
+    Map<String, int> statistics = {
+      'Total': events.length, // 添加总数统计
+      for (var feeling in DataUtils.textFeeling) feeling: 0
+    };
+
+    for (var event in events) {
+      if (event.feeling >= 0 && event.feeling < DataUtils.textFeeling.length) {
+        String feelingText = DataUtils.textFeeling[event.feeling];
+        statistics[feelingText] = (statistics[feelingText] ?? 0) + 1;
+      }
+    }
+
+    return statistics;
+  }
+
+  static List<RecordBean> getRecordsByFeeling(String feeling) {
+    if (feeling == "Total") {
+      return List.from(events);
+    }
+    int feelingIndex = DataUtils.textFeeling.indexOf(feeling);
+    if (feelingIndex == -1) {
+      throw ArgumentError('Invalid feeling: $feeling');
+    }
+
+    // 筛选出对应心情的记录列表
+    return events.where((event) => event.feeling == feelingIndex).toList();
+  }
+
+  static bool isFirstRecordOfDay() {
+    // 获取今天的日期
+    DateTime today = DateTime.now();
+    String todayStr = DateFormat('yyyy-MM-dd').format(today);
+    // 查找是否已有任何记录是今天添加的
+    bool isFirst = !events.any((event) {
+      DateTime eventDate =
+          DateTime.fromMillisecondsSinceEpoch(int.parse(event.date) * 1000);
+      print("todayStr===${todayStr}=====${DateFormat('yyyy-MM-dd').format(eventDate)}");
+      return DateFormat('yyyy-MM-dd').format(eventDate) == todayStr;
+    });
+
+    return isFirst;
   }
 }

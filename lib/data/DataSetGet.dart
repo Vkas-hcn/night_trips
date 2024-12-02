@@ -66,6 +66,26 @@ class DataSetGet {
     }
   }
 
+  static Future<Image> getImagePath2(String name) async {
+    if (name.startsWith('assets/')) {
+      return Image.asset(
+        name,
+        fit: BoxFit.fill,
+      );
+    } else {
+      try {
+        final String persistentPath = await getPersistentImagePath(name);
+        return Image.file(
+          File(persistentPath),
+          fit: BoxFit.fill,
+        );
+      } catch (e) {
+        print('Error loading image file: $e');
+        throw e;
+      }
+    }
+  }
+
 
   static List<String> getBgImageView() {
     String? stringValue =

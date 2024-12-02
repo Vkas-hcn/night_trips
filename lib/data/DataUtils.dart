@@ -15,13 +15,20 @@ class DataUtils {
     "Snow",
     "Wind",
   ];
-
   static List<String> imagesFeeling = [
     'assets/images/emoji0.webp',
     'assets/images/emoji2.webp',
     'assets/images/emoji1.webp',
     'assets/images/emoji5.webp',
     'assets/images/emoji11.webp',
+  ];
+  static List<String> imagesBg = [
+    'assets/images/bg_w_1.webp',
+    'assets/images/bg_w_2.webp',
+    'assets/images/bg_w_3.webp',
+    'assets/images/bg_w_4.webp',
+    'assets/images/bg_w_5.webp',
+    'assets/images/bg_w_6.webp',
   ];
 
   static List<String> imagesFeeling2 = [
@@ -33,6 +40,15 @@ class DataUtils {
   ];
 
   static List<String> textFeeling  = [
+    "Very Happy",
+    "Happy",
+    "Neutral",
+    "Unhappy",
+    "Very Unhappy",
+  ];
+
+  static List<String> textFeelingRecord  = [
+    "Total",
     "Very Happy",
     "Happy",
     "Neutral",

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -5,17 +6,20 @@ import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:night_trips/cus/ImageDialog.dart';
 import 'package:night_trips/data/DataSetGet.dart';
 import 'package:night_trips/data/DataUtils.dart';
 import 'package:night_trips/data/RecordBean.dart';
 import 'package:path_provider/path_provider.dart';
 
+import 'MainApp.dart';
 import 'cus/CustomDialog.dart';
 import 'cus/RecordManager.dart';
-import 'data/LocalStorage.dart';
 
 class AddPage extends StatefulWidget {
-  const AddPage({super.key});
+  final RecordBean? recordBean;
+
+  const AddPage({super.key, this.recordBean});
 
   @override
   State<AddPage> createState() => _AddPageState();
@@ -24,13 +28,30 @@ class AddPage extends StatefulWidget {
 class _AddPageState extends State<AddPage> {
   int imgWeather = 0;
   int imgFeeling = 0;
+  List<String> bgImageList = [];
   final feelController = TextEditingController();
   DateTime selectedDate = DateTime.now();
+  bool showImage = false;
+  int indexBg = 0;
 
   @override
   void initState() {
     super.initState();
+    setPageInFormation();
     feelController.addListener(showWeightController);
+  }
+
+  void setPageInFormation() {
+    if (widget.recordBean != null) {
+      setState(() {
+        imgWeather = widget.recordBean!.weather;
+        imgFeeling = widget.recordBean!.feeling;
+        feelController.text = widget.recordBean!.information;
+        selectedDate = DateTime.fromMillisecondsSinceEpoch(
+            int.parse(widget.recordBean!.date) * 1000);
+        bgImageList = List<String>.from(json.decode(widget.recordBean!.bgList));
+      });
+    }
   }
 
   void showWeightController() async {
@@ -44,17 +65,63 @@ class _AddPageState extends State<AddPage> {
 
   Future<void> pickImage() async {
     final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    final List<XFile>? images = await picker.pickMultiImage(
+      imageQuality: 90, // 可以调整图片质量
+      maxWidth: 1080, // 可以调整图片最大宽度
+    );
 
-    if (image != null) {
+    if (images != null && images.isNotEmpty) {
       final directory = await getApplicationDocumentsDirectory();
-      final String newPath =
-          '${directory.path}/${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final File newImage = await File(image.path).copy(newPath);
-      DataSetGet.addImageToTop(newImage.path);
-      setState(() {
-        DataSetGet.getBgImageView();
-      });
+
+      for (final image in images) {
+        if (bgImageList.length >= 3) {
+          Fluttertoast.showToast(msg: "You can only select up to 3 images");
+          break; // 如果已经选择了3张图片，则停止选择
+        }
+
+        // 检查图片格式
+        final String extension = image.path.split('.').last.toLowerCase();
+        if (extension != 'jpg' && extension != 'jpeg' && extension != 'png') {
+          Fluttertoast.showToast(msg: "Unsupported image format");
+          continue; // 不支持的格式
+        }
+
+        // 检查图片大小
+        final int imageSize = await image.length();
+        if (imageSize > 5 * 1024 * 1024) {
+          Fluttertoast.showToast(msg: "Image size exceeds 5MB");
+          continue; // 图片大小超过5MB
+        }
+
+        final String newPath =
+            '${directory.path}/${DateTime.now().millisecondsSinceEpoch}.${extension}';
+        final File newImage = await File(image.path).copy(newPath);
+        setState(() {
+          bgImageList.insert(0, newImage.path);
+        });
+      }
+    }
+  }
+
+  void nextAddFun(
+      Function() nextJump, Function() nextJump2, Function() nextJump3) {
+    bool isFirstDiary = RecordManager.isFirstRecordOfDay();
+    print("isFirstDiary====$isFirstDiary");
+    if (isFirstDiary) {
+      nextJump3();
+      showCustomDialog(context);
+    } else {
+      if (widget.recordBean != null) {
+        nextJump();
+        Navigator.pop(context, widget.recordBean);
+        return;
+      }
+      print("isFirstDiary====2222");
+      nextJump2();
+      Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => (MainApp())),
+          (route) => route == null);
     }
   }
 
@@ -63,9 +130,7 @@ class _AddPageState extends State<AddPage> {
       context: context,
       builder: (BuildContext context) {
         return CustomDialog(
-          onClose: () {
-            print('弹框关闭');
-          },
+          onClose: () {},
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -86,22 +151,33 @@ class _AddPageState extends State<AddPage> {
                   color: const Color(0xFF31429D),
                   borderRadius: BorderRadius.circular(36),
                 ),
-                child: const Center(
-                  child: Text(
-                    'Yes',
-                    style: TextStyle(
-                      color: Color(0xFFFFFFFF),
-                      fontSize: 16,
+                child: Center(
+                  child: GestureDetector(
+                    onTap: () {},
+                    child: const Text(
+                      'Yes',
+                      style: TextStyle(
+                        color: Color(0xFFFFFFFF),
+                        fontSize: 16,
+                      ),
                     ),
                   ),
                 ),
               ),
               const SizedBox(height: 12),
-              const Text(
-                'Later',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Color(0x99FCFFFF),
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (context) => (MainApp())),
+                      (route) => route == null);
+                },
+                child: const Text(
+                  'Later',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Color(0x99FCFFFF),
+                  ),
                 ),
               )
             ],
@@ -111,31 +187,59 @@ class _AddPageState extends State<AddPage> {
     );
   }
 
-  void saveData() {
+  void showImageDialog(BuildContext context, int index) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return ImageDialog(
+          img: bgImageList[index],
+          onClose: () {},
+        );
+      },
+    );
+  }
+
+  void saveData() async {
     if (feelController.text.trim().isEmpty) {
       Fluttertoast.showToast(msg: "Please enter the feelings");
       return;
     }
-    String? bgImageList =
-    LocalStorage().getValue(LocalStorage.bgImageList) as String?;
+    String jsonImages = json.encode(bgImageList);
     RecordBean event = RecordBean(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: widget.recordBean != null
+          ? widget.recordBean?.id ??
+              DateTime.now().millisecondsSinceEpoch.toString()
+          : DateTime.now().millisecondsSinceEpoch.toString(),
       information: feelController.text,
       date: (selectedDate.millisecondsSinceEpoch ~/ 1000).toString(),
-      bgList: bgImageList?? '',
+      bgList: jsonImages ?? '',
       weather: imgWeather,
       feeling: imgFeeling,
     );
-    RecordManager.addRecord(event);
+    nextAddFun(() {
+      RecordManager.updateRecord(event);
+    }, () {
+      RecordManager.addRecord(event);
+    }, () {
+      saveFun(event);
+    });
+
     Fluttertoast.showToast(msg: "Saved Successfully");
-    // showCustomDialog(context);
+  }
+
+  void saveFun(RecordBean event) {
+    if (widget.recordBean != null) {
+      RecordManager.updateRecord(event);
+    } else {
+      RecordManager.addRecord(event);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     String formattedDate;
     formattedDate = DateFormat('yyyy/MM/dd').format(selectedDate);
-      return WillPopScope(
+    return WillPopScope(
       onWillPop: () async {
         Navigator.pop(context);
         return false;
@@ -187,8 +291,9 @@ class _AddPageState extends State<AddPage> {
                                   border: Border.all(
                                       color: const Color(0x80E8E8E8), width: 1),
                                 ),
-                                child:  Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 28),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 8.0, horizontal: 28),
                                   child: Row(
                                     children: [
                                       Text(
@@ -350,7 +455,7 @@ class _AddPageState extends State<AddPage> {
                     padding:
                         const EdgeInsets.only(top: 0.0, left: 20, right: 20),
                     child: SizedBox(
-                      height: 100, // 设置固定高度
+                      height: 100,
                       child: ListView.builder(
                         scrollDirection: Axis.horizontal,
                         itemCount: DataUtils.imagesFeeling.length,
@@ -443,10 +548,12 @@ class _AddPageState extends State<AddPage> {
                             height: 103,
                             child: ListView.builder(
                               scrollDirection: Axis.horizontal,
-                              itemCount: DataSetGet.getBgImageView().length,
+                              itemCount: bgImageList.length,
                               itemBuilder: (context, index) {
                                 return GestureDetector(
-                                  onTap: () {},
+                                  onTap: () {
+                                    showImageDialog(context, index);
+                                  },
                                   child: Container(
                                     margin: const EdgeInsets.only(right: 15.0),
                                     child: Stack(
@@ -454,8 +561,7 @@ class _AddPageState extends State<AddPage> {
                                       children: [
                                         Center(
                                           child: CustomCircle(
-                                            img: DataSetGet.getBgImageView()[
-                                                index],
+                                            img: bgImageList[index],
                                           ),
                                         ),
                                         Padding(
@@ -463,10 +569,7 @@ class _AddPageState extends State<AddPage> {
                                           child: GestureDetector(
                                             onTap: () {
                                               setState(() {
-                                                DataSetGet.getBgImageView()
-                                                    .removeAt(index);
-                                                DataSetGet
-                                                    .saveImagesToStorage();
+                                                bgImageList.removeAt(index);
                                               });
                                             },
                                             child: SizedBox(
@@ -528,23 +631,24 @@ class _AddPageState extends State<AddPage> {
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? pickedDate = await showDatePicker(
       context: context,
-      initialDate: DateTime.now().add(const Duration(days: 1)),
-      // 初始日期为明天
-      firstDate: DateTime.now().add(const Duration(days: 1)),
-      // 最早日期为明天
-      lastDate: DateTime(2100),
+      initialDate: DateTime.now(),
+      // 初始日期为今天
+      firstDate: DateTime(2000),
+      // 设置一个合理的过去日期
+      lastDate: DateTime.now(),
+      // 最后日期为今天
       // 设置一个合理的未来日期
       builder: (BuildContext context, Widget? child) {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Colors.blue, // 主色
-              onPrimary: Colors.white, // 文字颜色
-              onSurface: Colors.black, // 表面颜色
+              primary: Color(0xFF031F3E),
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
             ),
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(
-                foregroundColor: Colors.blue, // 按钮文字颜色
+                foregroundColor: Color(0xFF031F3E),
               ),
             ),
           ),
