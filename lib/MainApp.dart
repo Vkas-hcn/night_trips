@@ -68,7 +68,10 @@ class _MainAppState extends State<MainApp> {
       MaterialPageRoute(
         builder: (context) => const AddPage(),
       ),
-    );
+    ).then((value) {
+      print("object--goAddPage---");
+      getListData();
+    });
   }
 
   void goSleepPage()  {

@@ -56,4 +56,16 @@ class DataUtils {
     "Very Unhappy",
   ];
 
+  static List<String> mp3List  = [
+    "sound/rain_sound.mp3",
+    "sound/sound_snow.mp3",
+    "sound/firewood_sound.mp3",
+    "sound/forest_bird.mp3",
+  ];
+  static List<String> mp3ListName  = [
+    "RainSound",
+    "Snow",
+    "Firewood",
+    "Forest Bird",
+  ];
 }

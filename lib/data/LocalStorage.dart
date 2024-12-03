@@ -5,6 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 class LocalStorage {
   static String dateList = "dateListjson";
   static String bgImageList = "bgImageList";
+  static String muIndex = "muIndex";
+  static String bgIndex = "bgIndex";
+
   static final LocalStorage _instance = LocalStorage._internal();
   late SharedPreferences _prefs;
   static String clickFeelId = "";
@@ -39,4 +42,19 @@ class LocalStorage {
     return _prefs.get(key);
   }
 
+  //获取muIndex数据
+   Future<int> getMuIndex() async {
+    return _prefs.getInt(muIndex) ?? 0;
+  }
+  Future<void> setMuIndex(int index) async {
+    await _prefs.setInt(muIndex, index);
+  }
+
+  //获取muIndex数据
+  Future<int> getBgIndex() async {
+    return _prefs.getInt(bgIndex) ?? 0;
+  }
+  Future<void> setBgIndex(int index) async {
+    await _prefs.setInt(bgIndex, index);
+  }
 }

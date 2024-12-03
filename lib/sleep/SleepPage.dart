@@ -5,7 +5,7 @@ import 'package:night_trips/data/DataSetGet.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'dart:async';
 import '../data/DataUtils.dart';
-import '../test.dart';
+import '../data/LocalStorage.dart';
 
 class SleepPage extends StatefulWidget {
   const SleepPage({super.key});
@@ -15,25 +15,50 @@ class SleepPage extends StatefulWidget {
 }
 
 class _SleepPageState extends State<SleepPage> {
+  bool _isPlaying = false;
   int indexBg = 0;
   final AudioPlayer _audioPlayer = AudioPlayer();
   Timer? _timer;
-  int _remainingTime = 30*60; // 初始时间 30 分钟（单位：秒）
+  int _remainingTime = 30 * 60; // 初始时间 30 分钟（单位：秒）
   int _volume = 50; // 音量 0-100
-  int _maxTime = 60*120; // 上限时间 120 分钟
-  int _minTime = 60*5; // 下限时间 5 秒
+  int _maxTime = 60 * 120; // 上限时间 120 分钟
+  int _minTime = 60 * 5; // 下限时间 5 秒
   double _currentVolume = 0.5; // 当前音量 [0.0, 1.0]
+  void _onPlayStatusChanged(bool isPlaying) {
+    setState(() {
+      _isPlaying = isPlaying;
+    });
+  }
 
   @override
   void initState() {
     super.initState();
+    setBgIndex();
   }
 
+  void setBgIndex() async {
+    indexBg = await LocalStorage().getBgIndex();
+    setState(() {});
+  }
 
   @override
   void dispose() {
     super.dispose();
+    _releaseResources();
   }
+
+  void _releaseResources() {
+    try {
+      _stopMusic();
+    } catch (e, stackTrace) {
+      // 记录异常信息
+      print('Error stopping music: $e');
+      print('Stack trace: $stackTrace');
+    } finally {
+      _audioPlayer.dispose();
+    }
+  }
+
   // 格式化时间为 "00:00:00"
   String get formattedTime {
     int hours = _remainingTime ~/ 3600;
@@ -57,6 +82,7 @@ class _SleepPageState extends State<SleepPage> {
         } else {
           _stopMusic(); // 倒计时结束后停止音乐
           _timer?.cancel();
+          setState(() {});
         }
       });
     });
@@ -71,17 +97,10 @@ class _SleepPageState extends State<SleepPage> {
 
   // 调整倒计时时间
   void _adjustTime(double delta) {
-    print("object====$delta");
-    print("_maxTime====$_maxTime");
-
-    double deltaInSeconds = (_maxTime.toDouble()*((delta/100)));
-    print("deltaInSeconds====$deltaInSeconds");
-
+    double deltaInSeconds = (_maxTime.toDouble() * ((delta / 100)));
     setState(() {
       _remainingTime = (deltaInSeconds.toInt()).clamp(_minTime, _maxTime);
     });
-    print("_remainingTime====$_remainingTime");
-
   }
 
   // 调整音量
@@ -93,29 +112,50 @@ class _SleepPageState extends State<SleepPage> {
     });
   }
 
-  // 播放音乐
-  void _playMusic() async {
-    if (_audioPlayer.state == PlayerState.playing) {
+  void setPlayMusic(String path) async {
+    if (_isPlaying) {
       _pauseMusic();
-      _pauseTimer();
-      return; // 音乐已经在播放中
+    } else {
+      _playMusic(path);
     }
-    await _audioPlayer.play(AssetSource('sound/rain_sound.mp3')); // 本地资源路径
+  }
+
+  void _playMusic(String path) async {
+    print("object----path-----${path}");
+    await _audioPlayer.play(AssetSource(path));
+    await _audioPlayer.setReleaseMode(ReleaseMode.loop);
+    setState(() {
+      _isPlaying = true;
+    });
     _startTimer();
   }
 
   // 暂停音乐
   void _pauseMusic() {
     _audioPlayer.pause();
+    setState(() {
+      _isPlaying = false;
+    });
+    _pauseTimer();
   }
 
   // 停止音乐
   void _stopMusic() {
     _audioPlayer.stop();
+    setState(() {
+      _isPlaying = false;
+    });
+    _pauseTimer();
   }
-  void backRefFun() async {
 
+  void setMusicData() async {
+    int bgindex = await LocalStorage().getMuIndex();
+    String path = DataUtils.mp3List[bgindex];
+    setPlayMusic(path);
   }
+
+  void backRefFun() async {}
+
   void _showBottomSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -127,6 +167,7 @@ class _SleepPageState extends State<SleepPage> {
       },
     );
   }
+
   void _showBottomVolume(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -134,6 +175,20 @@ class _SleepPageState extends State<SleepPage> {
       builder: (BuildContext context) {
         return BottomVolumeContent(
           adjustTimeCallback: _adjustVolume,
+        );
+      },
+    );
+  }
+
+  void _showBottomList(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext context) {
+        return BottomListContent(
+          playCallback: setPlayMusic,
+          isPlaying: _isPlaying,
+          onPlayStatusChanged: _onPlayStatusChanged,
         );
       },
     );
@@ -166,8 +221,9 @@ class _SleepPageState extends State<SleepPage> {
                       children: [
                         Center(
                           child: GestureDetector(
-                            onTap: (){
+                            onTap: () {
                               print("object----indexBg=$index");
+                              LocalStorage().setBgIndex(index);
                               setState(() {
                                 indexBg = index;
                               });
@@ -178,17 +234,20 @@ class _SleepPageState extends State<SleepPage> {
                             ),
                           ),
                         ),
-                          indexBg==index?Padding(
-                          padding: const EdgeInsets.only(top: 12.0,right: 20),
-                          child: SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: Image.asset(
-                              'assets/images/ic_c_bg_t.webp',
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ):SizedBox(),
+                        indexBg == index
+                            ? Padding(
+                                padding:
+                                    const EdgeInsets.only(top: 12.0, right: 20),
+                                child: SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: Image.asset(
+                                    'assets/images/ic_c_bg_t.webp',
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              )
+                            : SizedBox(),
                       ],
                     ),
                   );
@@ -203,6 +262,7 @@ class _SleepPageState extends State<SleepPage> {
       },
     );
   }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -213,15 +273,15 @@ class _SleepPageState extends State<SleepPage> {
       child: Scaffold(
         resizeToAvoidBottomInset: true,
         body: Container(
-          decoration:  BoxDecoration(
+          decoration: BoxDecoration(
             image: DecorationImage(
               image: AssetImage(DataUtils.imagesBg[indexBg]),
               fit: BoxFit.cover,
             ),
           ),
           child: Padding(
-            padding: const EdgeInsets.only(
-                top: 56, right: 20, left: 20, bottom: 20),
+            padding:
+                const EdgeInsets.only(top: 56, right: 20, left: 20, bottom: 20),
             child: Column(
               mainAxisSize: MainAxisSize.max,
               children: [
@@ -253,7 +313,7 @@ class _SleepPageState extends State<SleepPage> {
                         SizedBox(width: 12),
                         GestureDetector(
                           onTap: () {
-                            backRefFun();
+                            _showBottomList(context);
                           },
                           child: SizedBox(
                             width: 32,
@@ -269,7 +329,8 @@ class _SleepPageState extends State<SleepPage> {
                           child: SizedBox(
                             width: 32,
                             height: 32,
-                            child: Image.asset('assets/images/setting_time.webp'),
+                            child:
+                                Image.asset('assets/images/setting_time.webp'),
                           ),
                         ),
                         SizedBox(width: 12),
@@ -288,24 +349,25 @@ class _SleepPageState extends State<SleepPage> {
                   ],
                 ),
                 const SizedBox(height: 123),
-                 Text(formattedTime,
+                Text(formattedTime,
                     textAlign: TextAlign.right,
                     style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 48,
-                        fontWeight: FontWeight.bold
-                    )),
+                        color: Colors.white,
+                        fontSize: 48,
+                        fontWeight: FontWeight.bold)),
                 const SizedBox(height: 290),
                 GestureDetector(
                   onTap: () {
                     setState(() {
-                      _playMusic();
+                      setMusicData();
                     });
                   },
                   child: SizedBox(
                     width: 56,
                     height: 56,
-                    child: Image.asset(_audioPlayer.state == PlayerState.playing?'assets/images/player_button_stop.webp':'assets/images/player_button.webp'),
+                    child: Image.asset(_isPlaying
+                        ? 'assets/images/player_button_stop.webp'
+                        : 'assets/images/player_button.webp'),
                   ),
                 ),
               ],
@@ -315,8 +377,6 @@ class _SleepPageState extends State<SleepPage> {
       ),
     );
   }
-
-
 }
 
 class CustomCircle extends StatelessWidget {
@@ -343,7 +403,7 @@ class CustomCircle extends StatelessWidget {
                   snapshot.hasData) {
                 return snapshot.data!;
               } else {
-                return CircularProgressIndicator();
+                return const CircularProgressIndicator();
               }
             },
           ),
@@ -352,12 +412,16 @@ class CustomCircle extends StatelessWidget {
     );
   }
 }
+
 class BottomSheetContent extends StatefulWidget {
   final Function(double) adjustTimeCallback;
+
   BottomSheetContent({required this.adjustTimeCallback});
+
   @override
   BottomSheetContentState createState() => BottomSheetContentState();
 }
+
 class BottomSheetContentState extends State<BottomSheetContent> {
   double selectedValue = 25.0;
   double addValue = 1.0;
@@ -365,6 +429,7 @@ class BottomSheetContentState extends State<BottomSheetContent> {
   void _onTimeChanged(double duration) {
     widget.adjustTimeCallback(duration);
   }
+
   void _increase() {
     setState(() {
       selectedValue += addValue;
@@ -396,7 +461,10 @@ class BottomSheetContentState extends State<BottomSheetContent> {
               SizedBox(width: 24),
               const Text(
                 'Playback Time',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white),
                 textAlign: TextAlign.center,
               ),
               Spacer(),
@@ -471,7 +539,6 @@ class BottomSheetContentState extends State<BottomSheetContent> {
             ),
           ),
           SizedBox(height: 56),
-
         ],
       ),
     );
@@ -480,10 +547,13 @@ class BottomSheetContentState extends State<BottomSheetContent> {
 
 class BottomVolumeContent extends StatefulWidget {
   final Function(double) adjustTimeCallback;
+
   BottomVolumeContent({required this.adjustTimeCallback});
+
   @override
   BottomVolumeContentState createState() => BottomVolumeContentState();
 }
+
 class BottomVolumeContentState extends State<BottomVolumeContent> {
   double selectedValue = 25.0;
   double addValue = 1.0;
@@ -491,6 +561,7 @@ class BottomVolumeContentState extends State<BottomVolumeContent> {
   void _onTimeChanged(double duration) {
     widget.adjustTimeCallback(duration);
   }
+
   void _increase() {
     setState(() {
       selectedValue += addValue;
@@ -522,7 +593,10 @@ class BottomVolumeContentState extends State<BottomVolumeContent> {
               SizedBox(width: 24),
               const Text(
                 'Volume',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white),
                 textAlign: TextAlign.center,
               ),
               Spacer(),
@@ -556,6 +630,7 @@ class BottomVolumeContentState extends State<BottomVolumeContent> {
                     setState(() {
                       selectedValue = value;
                     });
+                    _onTimeChanged(selectedValue);
                   },
                 ),
               ),
@@ -593,11 +668,204 @@ class BottomVolumeContentState extends State<BottomVolumeContent> {
             ),
           ),
           SizedBox(height: 56),
-
         ],
       ),
     );
   }
 }
 
+class BottomListContent extends StatefulWidget {
+  final Function(String) playCallback;
+  final bool isPlaying;
+  final ValueChanged<bool> onPlayStatusChanged;
 
+  const BottomListContent(
+      {super.key,
+      required this.playCallback,
+      required this.isPlaying,
+      required this.onPlayStatusChanged});
+
+  @override
+  BottomListContentState createState() => BottomListContentState();
+}
+
+class BottomListContentState extends State<BottomListContent> {
+  int selectedIndex = 0;
+  int selectedIndexRihgt = 0;
+
+  bool dialogState = false;
+
+  void playCallback(String name) {
+    widget.playCallback(name);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    setSindex();
+  }
+
+  void setSindex() async {
+    int? sindex = await LocalStorage().getMuIndex();
+    setState(() {
+      selectedIndex = sindex;
+      selectedIndexRihgt = sindex;
+      dialogState = widget.isPlaying;
+    });
+  }
+
+  void playRight(int index) {
+    if (selectedIndex != index) {
+      dialogState = false;
+    }
+    setState(() {
+      selectedIndex =index;
+      selectedIndexRihgt = index;
+    });
+    widget.onPlayStatusChanged(dialogState);
+    setState(() {
+      dialogState = !dialogState;
+    });
+    playCallback(DataUtils.mp3List[index]);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Color(0xFF02223B),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Spacer(),
+              const SizedBox(width: 24),
+              const Text(
+                'Music',
+                style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white),
+                textAlign: TextAlign.center,
+              ),
+              Spacer(),
+              IconButton(
+                color: Colors.white,
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            height: 280,
+            child: SingleChildScrollView(
+              child: ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                scrollDirection: Axis.vertical,
+                itemCount: DataUtils.mp3List.length,
+                itemBuilder: (context, index) {
+                  return GestureDetector(
+                    onTap: () {
+                      LocalStorage().setMuIndex(index);
+                      setState(() {
+                        selectedIndex = index;
+                      });
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20.0, vertical: 8),
+                      child: Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          image: DecorationImage(
+                            image: AssetImage(selectedIndex == index
+                                ? 'assets/images/bg_mu_c.webp'
+                                : 'assets/images/bg_mu_d_c.webp'),
+                            fit: BoxFit.fill,
+                          ),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20.0, vertical: 16),
+                          child: Center(
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                  bottom: 12.0, top: 4, right: 8, left: 8),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    DataUtils.mp3ListName[index],
+                                    style: const TextStyle(
+                                      fontFamily: 'ab',
+                                      fontSize: 14,
+                                      color: Color(0xFFFFFFFF),
+                                    ),
+                                  ),
+                                  Spacer(),
+                                  GestureDetector(
+                                    onTap: () {
+                                      playRight(index);
+                                    },
+                                    child: SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: Image.asset((selectedIndexRihgt ==
+                                                  index &&
+                                              dialogState)
+                                          ? 'assets/images/player_button_stop.webp'
+                                          : 'assets/images/player_button.webp'),
+                                    ),
+                                  )
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+          SizedBox(height: 20),
+          GestureDetector(
+            onTap: () {
+              widget.onPlayStatusChanged(false);
+              setState(() {
+                dialogState = false;
+              });
+              LocalStorage().setMuIndex(selectedIndex);
+              playCallback(DataUtils.mp3List[selectedIndex]);
+              Navigator.pop(context);
+            },
+            child: Container(
+              width: 243,
+              height: 56,
+              decoration: BoxDecoration(
+                color: const Color(0xFF31429D),
+                borderRadius: BorderRadius.circular(36),
+              ),
+              child: const Center(
+                child: Text(
+                  'Confirm',
+                  style: TextStyle(
+                    color: Color(0xFFFFFFFF),
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: 56),
+        ],
+      ),
+    );
+  }
+}

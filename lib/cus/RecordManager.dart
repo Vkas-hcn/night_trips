@@ -51,7 +51,7 @@ class RecordManager {
   }
 
   // 更新指定ID的Record
-  static void updateRecord(RecordBean updatedRecord) {
+  static Future<void> updateRecord(RecordBean updatedRecord) async {
     int index = events.indexWhere((event) => event.id == updatedRecord.id);
     if (index != -1) {
       events[index] = updatedRecord; // 更新事件

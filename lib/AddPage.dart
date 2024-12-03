@@ -10,6 +10,7 @@ import 'package:night_trips/cus/ImageDialog.dart';
 import 'package:night_trips/data/DataSetGet.dart';
 import 'package:night_trips/data/DataUtils.dart';
 import 'package:night_trips/data/RecordBean.dart';
+import 'package:night_trips/sleep/SleepPage.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'MainApp.dart';
@@ -66,8 +67,8 @@ class _AddPageState extends State<AddPage> {
   Future<void> pickImage() async {
     final ImagePicker picker = ImagePicker();
     final List<XFile>? images = await picker.pickMultiImage(
-      imageQuality: 90, // 可以调整图片质量
-      maxWidth: 1080, // 可以调整图片最大宽度
+      imageQuality: 90,
+      maxWidth: 1080,
     );
 
     if (images != null && images.isNotEmpty) {
@@ -113,7 +114,6 @@ class _AddPageState extends State<AddPage> {
     } else {
       if (widget.recordBean != null) {
         nextJump();
-        Navigator.pop(context, widget.recordBean);
         return;
       }
       print("isFirstDiary====2222");
@@ -153,7 +153,10 @@ class _AddPageState extends State<AddPage> {
                 ),
                 child: Center(
                   child: GestureDetector(
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(builder: (context) => SleepPage()));
+                    },
                     child: const Text(
                       'Yes',
                       style: TextStyle(
@@ -217,7 +220,7 @@ class _AddPageState extends State<AddPage> {
       feeling: imgFeeling,
     );
     nextAddFun(() {
-      RecordManager.updateRecord(event);
+      jumpBack(event);
     }, () {
       RecordManager.addRecord(event);
     }, () {
@@ -225,6 +228,11 @@ class _AddPageState extends State<AddPage> {
     });
 
     Fluttertoast.showToast(msg: "Saved Successfully");
+  }
+
+  void jumpBack(RecordBean event) async {
+    await RecordManager.updateRecord(event);
+    Navigator.pop(context, event);
   }
 
   void saveFun(RecordBean event) {
