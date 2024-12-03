@@ -6,6 +6,7 @@ import 'package:night_trips/data/DataSetGet.dart';
 import 'package:night_trips/data/DataUtils.dart';
 import 'package:night_trips/data/RecordBean.dart';
 import 'package:night_trips/sleep/SleepPage.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'AddPage.dart';
@@ -109,7 +110,7 @@ class _MainAppState extends State<MainApp> {
                 const SizedBox(height: 40),
                 ListTile(
                   contentPadding: const EdgeInsets.only(right: 0),
-                  title: const Text('User Agreement',
+                  title: const Text('Post a Comment',
                       textAlign: TextAlign.right,
                       style: TextStyle(
                         fontFamily: 'eb',
@@ -117,7 +118,21 @@ class _MainAppState extends State<MainApp> {
                         fontSize: 12,
                       )),
                   onTap: () {
-                    _launchUserURL();
+                    _launchPPURL();
+                  },
+                ),
+                const SizedBox(height: 40),
+                ListTile(
+                  contentPadding: const EdgeInsets.only(right: 0),
+                  title: const Text('Share with Friends',
+                      textAlign: TextAlign.right,
+                      style: TextStyle(
+                        fontFamily: 'eb',
+                        color: Colors.white,
+                        fontSize: 12,
+                      )),
+                  onTap: () {
+                    _shareText();
                   },
                 ),
                 const SizedBox(height: 40),
@@ -134,6 +149,25 @@ class _MainAppState extends State<MainApp> {
                     _launchPPURL();
                   },
                 ),
+                const SizedBox(height: 40),
+                ListTile(
+                  contentPadding: const EdgeInsets.only(right: 0),
+                  title: const Text('Terms of Service',
+                      textAlign: TextAlign.right,
+                      style: TextStyle(
+                        fontFamily: 'eb',
+                        color: Colors.white,
+                        fontSize: 12,
+                      )),
+                  onTap: () {
+                    _launchUserURL();
+                  },
+                ),
+                SizedBox(
+                  width: 150,
+                  height: 217,
+                  child: Image.asset('assets/images/ic_nav_bm.webp'),
+                )
               ],
             ),
           ),
@@ -508,8 +542,15 @@ class _MainAppState extends State<MainApp> {
       ]),
     );
   }
-
-  _launchPPURL() async {
+  void _shareText() async {
+    //TODO: Replace with your own url
+    try {
+      await Share.share('https://flutterchina.club/');
+    } catch (e) {
+      print('Error sharing text: $e');
+    }
+  }
+  void _launchPPURL() async {
     //TODO: Replace with your own url
     const url = 'https://flutterchina.club/';
     if (await canLaunch(url)) {
