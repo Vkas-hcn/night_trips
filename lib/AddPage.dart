@@ -30,16 +30,23 @@ class _AddPageState extends State<AddPage> {
   int imgWeather = 0;
   int imgFeeling = 0;
   List<String> bgImageList = [];
-  final feelController = TextEditingController();
+  TextEditingController feelController = TextEditingController();
   DateTime selectedDate = DateTime.now();
   bool showImage = false;
   int indexBg = 0;
+  bool showDialogState = false;
 
   @override
   void initState() {
     super.initState();
     setPageInFormation();
     feelController.addListener(showWeightController);
+  }
+
+  @override
+  void dispose() {
+    feelController.dispose(); // 清理控制器
+    super.dispose();
   }
 
   void setPageInFormation() {
@@ -57,11 +64,6 @@ class _AddPageState extends State<AddPage> {
 
   void showWeightController() async {
     feelController.text.trim();
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
   }
 
   Future<void> pickImage() async {
@@ -104,19 +106,17 @@ class _AddPageState extends State<AddPage> {
     }
   }
 
-  void nextAddFun(
-      Function() nextJump, Function() nextJump2, Function() nextJump3) {
+  void nextAddFun(Function() nextJump, Function() nextJump2) {
     bool isFirstDiary = RecordManager.isFirstRecordOfDay();
     print("isFirstDiary====$isFirstDiary");
-    if (isFirstDiary) {
-      nextJump3();
+    if (isFirstDiary && !showDialogState) {
+      showDialogState = true;
       showCustomDialog(context);
     } else {
       if (widget.recordBean != null) {
         nextJump();
         return;
       }
-      print("isFirstDiary====2222");
       nextJump2();
       Navigator.pushAndRemoveUntil(
           context,
@@ -144,20 +144,20 @@ class _AddPageState extends State<AddPage> {
                 ),
               ),
               SizedBox(height: 20),
-              Container(
-                width: 208,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF31429D),
-                  borderRadius: BorderRadius.circular(36),
-                ),
-                child: Center(
-                  child: GestureDetector(
-                    onTap: () {
-                      Navigator.of(context).pushReplacement(
-                          MaterialPageRoute(builder: (context) => SleepPage()));
-                    },
-                    child: const Text(
+              GestureDetector(
+                onTap: () {
+                  Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(builder: (context) => SleepPage()));
+                },
+                child: Container(
+                  width: 208,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF31429D),
+                    borderRadius: BorderRadius.circular(36),
+                  ),
+                  child: const Center(
+                    child: Text(
                       'Yes',
                       style: TextStyle(
                         color: Color(0xFFFFFFFF),
@@ -170,10 +170,7 @@ class _AddPageState extends State<AddPage> {
               const SizedBox(height: 12),
               GestureDetector(
                 onTap: () {
-                  Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(builder: (context) => (MainApp())),
-                      (route) => route == null);
+                  Navigator.of(context).pop();
                 },
                 child: const Text(
                   'Later',
@@ -221,13 +218,12 @@ class _AddPageState extends State<AddPage> {
     );
     nextAddFun(() {
       jumpBack(event);
+      Fluttertoast.showToast(msg: "Saved Successfully");
     }, () {
       RecordManager.addRecord(event);
-    }, () {
-      saveFun(event);
+      Fluttertoast.showToast(msg: "Saved Successfully");
     });
 
-    Fluttertoast.showToast(msg: "Saved Successfully");
   }
 
   void jumpBack(RecordBean event) async {
@@ -420,23 +416,54 @@ class _AddPageState extends State<AddPage> {
                           height: 138,
                           child: Padding(
                             padding: const EdgeInsets.all(20.0),
-                            child: TextField(
-                              keyboardType: TextInputType.multiline,
-                              controller: feelController,
-                              maxLength: 3000,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Color(0xFFFFFFFF),
-                              ),
-                              decoration: const InputDecoration(
-                                hintText:
-                                    'Start writing down your feelings and experiences now.',
-                                hintStyle: TextStyle(
-                                  fontSize: 12,
-                                  color: Color(0xFF83B3EA),
+                            child: Stack(
+                              children: [
+                                TextField(
+                                  keyboardType: TextInputType.multiline,
+                                  controller: feelController,
+                                  maxLength: 5000,
+                                  maxLines: null,
+                                  buildCounter: (
+                                    BuildContext context, {
+                                    required int currentLength,
+                                    required bool isFocused,
+                                    required int? maxLength,
+                                  }) {
+                                    return null;
+                                  },
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFFFFFFFF),
+                                  ),
+                                  decoration: const InputDecoration(
+                                    hintText:
+                                        'Start writing down your feelings and experiences now.',
+                                    hintStyle: TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF83B3EA),
+                                    ),
+                                    border: InputBorder.none,
+                                  ),
                                 ),
-                                border: InputBorder.none,
-                              ),
+                                // 字符限制显示
+                                Positioned(
+                                  bottom: 4, // 设置字符限制显示的位置
+                                  right: 0,
+                                  child:
+                                      ValueListenableBuilder<TextEditingValue>(
+                                    valueListenable: feelController,
+                                    builder: (context, value, child) {
+                                      return Text(
+                                        '${value.text.length}/5000',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Color(0xFF83B3EA),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),

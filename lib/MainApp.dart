@@ -109,7 +109,7 @@ class _MainAppState extends State<MainApp> {
                 const SizedBox(height: 40),
                 ListTile(
                   contentPadding: const EdgeInsets.only(right: 0),
-                  title: const Text('Post a Comment',
+                  title: const Text('User Agreement',
                       textAlign: TextAlign.right,
                       style: TextStyle(
                         fontFamily: 'eb',
@@ -117,21 +117,7 @@ class _MainAppState extends State<MainApp> {
                         fontSize: 12,
                       )),
                   onTap: () {
-                    _launchURL();
-                  },
-                ),
-                const SizedBox(height: 40),
-                ListTile(
-                  contentPadding: const EdgeInsets.only(right: 0),
-                  title: const Text('Share with Friends',
-                      textAlign: TextAlign.right,
-                      style: TextStyle(
-                        fontFamily: 'eb',
-                        color: Colors.white,
-                        fontSize: 12,
-                      )),
-                  onTap: () {
-                    _launchURL();
+                    _launchUserURL();
                   },
                 ),
                 const SizedBox(height: 40),
@@ -145,7 +131,7 @@ class _MainAppState extends State<MainApp> {
                         fontSize: 12,
                       )),
                   onTap: () {
-                    _launchURL();
+                    _launchPPURL();
                   },
                 ),
               ],
@@ -523,7 +509,17 @@ class _MainAppState extends State<MainApp> {
     );
   }
 
-  _launchURL() async {
+  _launchPPURL() async {
+    //TODO: Replace with your own url
+    const url = 'https://flutterchina.club/';
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      _showToast('Cant open web page $url');
+    }
+  }
+
+  _launchUserURL() async {
     //TODO: Replace with your own url
     const url = 'https://flutterchina.club/';
     if (await canLaunch(url)) {

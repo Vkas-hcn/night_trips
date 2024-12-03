@@ -7,6 +7,9 @@ class LocalStorage {
   static String bgImageList = "bgImageList";
   static String muIndex = "muIndex";
   static String bgIndex = "bgIndex";
+  static String djsTime = "djsTime";
+
+  static String volumeData = "volumeData";
 
   static final LocalStorage _instance = LocalStorage._internal();
   late SharedPreferences _prefs;
@@ -42,7 +45,6 @@ class LocalStorage {
     return _prefs.get(key);
   }
 
-  //获取muIndex数据
    Future<int> getMuIndex() async {
     return _prefs.getInt(muIndex) ?? 0;
   }
@@ -50,11 +52,24 @@ class LocalStorage {
     await _prefs.setInt(muIndex, index);
   }
 
-  //获取muIndex数据
   Future<int> getBgIndex() async {
     return _prefs.getInt(bgIndex) ?? 0;
   }
   Future<void> setBgIndex(int index) async {
     await _prefs.setInt(bgIndex, index);
+  }
+
+  Future<int> getDjsTime() async {
+    return _prefs.getInt(djsTime) ?? 0;
+  }
+  Future<void> setDjsTime(int index) async {
+    await _prefs.setInt(djsTime, index);
+  }
+
+  Future<double> getVolumeTime() async {
+    return _prefs.getDouble(volumeData) ?? 0.0;
+  }
+  Future<void> setVolumeTime(double index) async {
+    await _prefs.setDouble(volumeData, index);
   }
 }

@@ -19,7 +19,7 @@ class _SleepPageState extends State<SleepPage> {
   int indexBg = 0;
   final AudioPlayer _audioPlayer = AudioPlayer();
   Timer? _timer;
-  int _remainingTime = 30 * 60; // 初始时间 30 分钟（单位：秒）
+  int _remainingTime = 15 * 60; // 初始时间 30 分钟（单位：秒）
   int _volume = 50; // 音量 0-100
   int _maxTime = 60 * 120; // 上限时间 120 分钟
   int _minTime = 60 * 5; // 下限时间 5 秒
@@ -38,6 +38,15 @@ class _SleepPageState extends State<SleepPage> {
 
   void setBgIndex() async {
     indexBg = await LocalStorage().getBgIndex();
+    int? time = await LocalStorage().getDjsTime();
+    double volume = await LocalStorage().getVolumeTime();
+
+    if (time > 0) {
+      _remainingTime = time;
+    }
+    if (volume > 0) {
+      _volume = volume.toInt();
+    }
     setState(() {});
   }
 
@@ -97,10 +106,11 @@ class _SleepPageState extends State<SleepPage> {
 
   // 调整倒计时时间
   void _adjustTime(double delta) {
-    double deltaInSeconds = (_maxTime.toDouble() * ((delta / 100)));
+    double deltaInSeconds = delta * 60;
     setState(() {
       _remainingTime = (deltaInSeconds.toInt()).clamp(_minTime, _maxTime);
     });
+    LocalStorage().setDjsTime(_remainingTime);
   }
 
   // 调整音量
@@ -142,9 +152,12 @@ class _SleepPageState extends State<SleepPage> {
   // 停止音乐
   void _stopMusic() {
     _audioPlayer.stop();
-    setState(() {
-      _isPlaying = false;
-    });
+    try {
+      setState(() {
+        _isPlaying = false;
+      });
+    } catch (e) {
+    }
     _pauseTimer();
   }
 
@@ -423,8 +436,8 @@ class BottomSheetContent extends StatefulWidget {
 }
 
 class BottomSheetContentState extends State<BottomSheetContent> {
-  double selectedValue = 25.0;
-  double addValue = 1.0;
+  double selectedValue = 15.0;
+  double addValue = 5.0;
 
   void _onTimeChanged(double duration) {
     widget.adjustTimeCallback(duration);
@@ -432,6 +445,10 @@ class BottomSheetContentState extends State<BottomSheetContent> {
 
   void _increase() {
     setState(() {
+      if (selectedValue + addValue > 120) {
+        selectedValue = 120;
+        return;
+      }
       selectedValue += addValue;
     });
   }
@@ -476,7 +493,17 @@ class BottomSheetContentState extends State<BottomSheetContent> {
             ],
           ),
           SizedBox(height: 20),
-          // 滑动选择器（滑块）
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: Text(
+              "${selectedValue.toStringAsFixed(0)}min",
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
 
           // 加减按钮
           Row(
@@ -492,8 +519,8 @@ class BottomSheetContentState extends State<BottomSheetContent> {
                 child: Slider(
                   value: selectedValue,
                   min: 0,
-                  max: 100,
-                  divisions: 100,
+                  max: 120,
+                  divisions: 5,
                   label: selectedValue.toStringAsFixed(0),
                   activeColor: Colors.blueAccent,
                   inactiveColor: Colors.white.withOpacity(0.3),
@@ -548,22 +575,42 @@ class BottomSheetContentState extends State<BottomSheetContent> {
 class BottomVolumeContent extends StatefulWidget {
   final Function(double) adjustTimeCallback;
 
-  BottomVolumeContent({required this.adjustTimeCallback});
+  const BottomVolumeContent({super.key, required this.adjustTimeCallback});
 
   @override
   BottomVolumeContentState createState() => BottomVolumeContentState();
 }
 
 class BottomVolumeContentState extends State<BottomVolumeContent> {
-  double selectedValue = 25.0;
-  double addValue = 1.0;
+  double selectedValue = 50.0;
+  double addValue = 5.0;
+
+  @override
+  void initState() {
+    super.initState();
+    setVolume();
+  }
+
+  void setVolume() async {
+    double volume = await LocalStorage().getVolumeTime();
+    if(volume>0){
+      setState(() {
+        selectedValue = volume;
+      });
+    }
+  }
 
   void _onTimeChanged(double duration) {
     widget.adjustTimeCallback(duration);
+    LocalStorage().setVolumeTime(duration);
   }
 
   void _increase() {
     setState(() {
+      if (selectedValue + addValue > 100) {
+        selectedValue = 100;
+        return;
+      }
       selectedValue += addValue;
     });
   }
@@ -608,6 +655,17 @@ class BottomVolumeContentState extends State<BottomVolumeContent> {
             ],
           ),
           SizedBox(height: 20),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: Text(
+              "${selectedValue.toStringAsFixed(0)}%", // 显示当前值
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -635,12 +693,12 @@ class BottomVolumeContentState extends State<BottomVolumeContent> {
                 ),
               ),
               IconButton(
-                icon: Icon(Icons.add, color: Colors.white),
+                icon: const Icon(Icons.add, color: Colors.white),
                 onPressed: _increase,
               ),
             ],
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           Padding(
             padding: const EdgeInsets.only(top: 16),
             child: GestureDetector(
@@ -719,7 +777,7 @@ class BottomListContentState extends State<BottomListContent> {
       dialogState = false;
     }
     setState(() {
-      selectedIndex =index;
+      selectedIndex = index;
       selectedIndexRihgt = index;
     });
     widget.onPlayStatusChanged(dialogState);
@@ -807,6 +865,15 @@ class BottomListContentState extends State<BottomListContent> {
                                       color: Color(0xFFFFFFFF),
                                     ),
                                   ),
+                                  const SizedBox(width: 8),
+                                  if ((selectedIndexRihgt == index &&
+                                      dialogState))
+                                    SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: Image.asset(
+                                          'assets/images/ic_frame.webp'),
+                                    ),
                                   Spacer(),
                                   GestureDetector(
                                     onTap: () {

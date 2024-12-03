@@ -97,8 +97,7 @@ class _DetailPageState extends State<DetailPage> {
               ),
             ),
             child: Padding(
-              padding: const EdgeInsets.only(
-                  top: 56, right: 20, left: 20, bottom: 20),
+              padding: const EdgeInsets.only(top: 56, right: 20, left: 20, bottom: 20),
               child: Column(
                 mainAxisSize: MainAxisSize.max,
                 children: [
@@ -124,7 +123,7 @@ class _DetailPageState extends State<DetailPage> {
                           height: 32,
                           child: Image.asset('assets/images/ic_edit.webp'),
                         ),
-                      )
+                      ),
                     ],
                   ),
                   const SizedBox(height: 24),
@@ -133,14 +132,13 @@ class _DetailPageState extends State<DetailPage> {
                       SizedBox(
                         width: 56,
                         height: 56,
-                        child: Image.asset(
-                            DataUtils.imagesFeeling[_currentRecordBean.feeling]),
+                        child: Image.asset(DataUtils.imagesFeeling[_currentRecordBean.feeling]),
                       ),
                       SizedBox(
                         width: 202,
                         height: 42,
                         child: Image.asset('assets/images/bg_feel_b.webp'),
-                      )
+                      ),
                     ],
                   ),
                   Container(
@@ -153,20 +151,27 @@ class _DetailPageState extends State<DetailPage> {
                       ),
                     ),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16.0, vertical: 20),
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20),
                       child: Column(
                         children: [
-                          Text(
-                            textAlign: TextAlign.start,
-                            _currentRecordBean.information,
-                            style: const TextStyle(
-                              fontFamily: 'eb',
-                              fontSize: 12,
-                              color: Color(0xFF8ABBF3),
+                          // Scrollable Text area
+                          Expanded(
+                            flex: 2,
+                            child: SingleChildScrollView(
+                              child: Text(
+                                _currentRecordBean.information,
+                                textAlign: TextAlign.start,
+                                style: const TextStyle(
+                                  fontFamily: 'eb',
+                                  fontSize: 12,
+                                  color: Color(0xFF8ABBF3),
+                                ),
+                              ),
                             ),
                           ),
+                          // Horizontal Image List
                           Expanded(
+                            flex: 1,
                             child: SizedBox(
                               height: 103,
                               child: ListView.builder(
@@ -203,12 +208,12 @@ class _DetailPageState extends State<DetailPage> {
                                 ),
                               ),
                             ],
-                          )
+                          ),
                         ],
                       ),
                     ),
                   ),
-                  SizedBox(height: 24)
+                  SizedBox(height: 24),
                 ],
               ),
             ),
@@ -217,6 +222,7 @@ class _DetailPageState extends State<DetailPage> {
       ),
     );
   }
+
 }
 
 class CustomCircle extends StatelessWidget {

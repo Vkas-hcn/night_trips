@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'Guide.dart';
 import 'data/LocalStorage.dart';
@@ -6,7 +7,12 @@ import 'data/LocalStorage.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   LocalStorage().init();
-  runApp(const MyApp());
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]).then((_) {
+    runApp(const MyApp());
+  });
 }
 
 class MyApp extends StatelessWidget {
