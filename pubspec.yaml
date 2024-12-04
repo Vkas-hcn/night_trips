@@ -57,7 +57,7 @@ flutter:
   assets:
     - assets/images/
     - assets/fonts/
-    - assets/sound/rain_sound.mp3
-    - assets/sound/sound_snow.mp3
-    - assets/sound/firewood_sound.mp3
-    - assets/sound/forest_bird.mp3
+    - assets/sound/10496.mp3
+    - assets/sound/10505.mp3
+    - assets/sound/11642.mp3
+    - assets/sound/12048.mp3

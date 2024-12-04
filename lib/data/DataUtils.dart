@@ -1,5 +1,4 @@
 class DataUtils {
-
   static List<String> imagesWeather = [
     'assets/images/weather_sunny.webp',
     'assets/images/weather_grey.webp',
@@ -8,7 +7,7 @@ class DataUtils {
     'assets/images/weather_storm.webp',
   ];
 
-  static List<String> textWeather  = [
+  static List<String> textWeather = [
     "Sun",
     "Cloud",
     "Rain",
@@ -39,7 +38,7 @@ class DataUtils {
     'assets/images/emoji30.webp',
   ];
 
-  static List<String> textFeeling  = [
+  static List<String> textFeeling = [
     "Very Happy",
     "Happy",
     "Neutral",
@@ -47,7 +46,7 @@ class DataUtils {
     "Very Unhappy",
   ];
 
-  static List<String> textFeelingRecord  = [
+  static List<String> textFeelingRecord = [
     "Total",
     "Very Happy",
     "Happy",
@@ -56,16 +55,16 @@ class DataUtils {
     "Very Unhappy",
   ];
 
-  static List<String> mp3List  = [
-    "sound/rain_sound.mp3",
-    "sound/sound_snow.mp3",
-    "sound/firewood_sound.mp3",
-    "sound/forest_bird.mp3",
+  static List<String> mp3List = [
+    "sound/10496.mp3",
+    "sound/10505.mp3",
+    "sound/11642.mp3",
+    "sound/12048.mp3",
   ];
-  static List<String> mp3ListName  = [
-    "RainSound",
-    "Snow",
-    "Firewood",
-    "Forest Bird",
+  static List<String> mp3ListName = [
+    "10496",
+    "10505",
+    "11642",
+    "12048",
   ];
 }
