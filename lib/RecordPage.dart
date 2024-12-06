@@ -5,10 +5,13 @@ import 'package:night_trips/DetailPage.dart';
 import 'package:night_trips/MainApp.dart';
 import 'package:night_trips/data/DataUtils.dart';
 import 'package:night_trips/data/RecordBean.dart';
+import 'package:night_trips/showint/AdShowui.dart';
+import 'package:night_trips/showint/ShowAdFun.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'AddPage.dart';
 import 'cus/RecordManager.dart';
+import 'data/DataSetGet.dart';
 
 class RecordPage extends StatefulWidget {
   const RecordPage({super.key});
@@ -21,11 +24,14 @@ class _RecordPageState extends State<RecordPage> {
   bool qrLoading = false;
   bool createDialog = false;
   int imgFeelState = 0;
+  late ShowAdFun adManager;
+  final AdShowui _loadingOverlay = AdShowui();
 
   @override
   void initState() {
     super.initState();
     getListData();
+    adManager = DataSetGet.getMobUtils(context);
   }
 
   @override
@@ -38,24 +44,30 @@ class _RecordPageState extends State<RecordPage> {
     getStatistics();
     setState(() {});
   }
+
   void backRefFun(int index) async {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) =>  DetailPage(recordBean: RecordManager.events[index]),
+        builder: (context) =>
+            DetailPage(recordBean: RecordManager.events[index]),
       ),
     ).then((value) {
       getListData();
     });
   }
-  void goAddPage()  {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const AddPage(),
-      ),
-    );
+
+  void goAddPage() {
+    showAdNextPaper(AdWhere.SAVE, () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const AddPage(),
+        ),
+      );
+    });
   }
+
   void getStatistics() async {
     // 加载记录
     await RecordManager.loadRecords();
@@ -69,11 +81,36 @@ class _RecordPageState extends State<RecordPage> {
     });
   }
 
+  void showAdNextPaper(AdWhere adWhere, Function() nextJump) async {
+    if (!adManager.canShowAd(adWhere)) {
+      adManager.loadAd(adWhere);
+    }
+    setState(() {
+      _loadingOverlay.show(context);
+    });
+    DataSetGet.showScanAd(context, adWhere, 5, () {
+      setState(() {
+        _loadingOverlay.hide();
+      });
+    }, () {
+      setState(() {
+        _loadingOverlay.hide();
+      });
+      nextJump();
+    });
+  }
+
+  void nextJump() {
+    Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        Navigator.of(context).pop();
+        showAdNextPaper(AdWhere.BACKINT, () {
+          nextJump();
+        });
         return false;
       },
       child: Scaffold(
@@ -106,7 +143,9 @@ class _RecordPageState extends State<RecordPage> {
                         padding: const EdgeInsets.only(left: 20),
                         child: GestureDetector(
                           onTap: () {
-                            Navigator.pop(context);
+                            showAdNextPaper(AdWhere.BACKINT, () {
+                              nextJump();
+                            });
                           },
                           child: SizedBox(
                             width: 32,
@@ -127,11 +166,13 @@ class _RecordPageState extends State<RecordPage> {
                     ],
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(top: 16.0, left: 20, right: 20),
+                    padding:
+                        const EdgeInsets.only(top: 16.0, left: 20, right: 20),
                     child: SizedBox(
                       height: 250,
                       child: GridView.builder(
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 3, // 每行显示3个项目
                           mainAxisSpacing: 1.0, // 主轴间距
                           crossAxisSpacing: 1.0, // 交叉轴间距
@@ -148,8 +189,10 @@ class _RecordPageState extends State<RecordPage> {
                               decoration: BoxDecoration(
                                 image: DecorationImage(
                                   image: imgFeelState == index
-                                      ? const AssetImage('assets/images/bg_to_1.webp')
-                                      : const AssetImage('assets/images/bg_to_2.webp'),
+                                      ? const AssetImage(
+                                          'assets/images/bg_to_1.webp')
+                                      : const AssetImage(
+                                          'assets/images/bg_to_2.webp'),
                                   fit: BoxFit.fill,
                                 ),
                               ),
@@ -159,7 +202,9 @@ class _RecordPageState extends State<RecordPage> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Text(
-                                      RecordManager.getFeelingStatistics().keys.elementAt(index),
+                                      RecordManager.getFeelingStatistics()
+                                          .keys
+                                          .elementAt(index),
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: imgFeelState == index
@@ -169,7 +214,10 @@ class _RecordPageState extends State<RecordPage> {
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                        RecordManager.getFeelingStatistics().values.elementAt(index).toString(),
+                                      RecordManager.getFeelingStatistics()
+                                          .values
+                                          .elementAt(index)
+                                          .toString(),
                                       style: const TextStyle(
                                         fontSize: 24,
                                         color: Color(0xFFFFFFFF),
@@ -184,167 +232,218 @@ class _RecordPageState extends State<RecordPage> {
                       ),
                     ),
                   ),
-                  if(RecordManager.getRecordsByFeeling(DataUtils.textFeelingRecord[imgFeelState]).isNotEmpty)
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        scrollDirection: Axis.vertical,
-                        itemCount:RecordManager.getRecordsByFeeling(DataUtils.textFeelingRecord[imgFeelState]).length,
-                        itemBuilder: (context, index) {
-                          final record = RecordManager.getRecordsByFeeling(DataUtils.textFeelingRecord[imgFeelState])[index];
-                          return Dismissible(
-                            key: Key(record.id.toString()), // 唯一标识符
-                            direction: DismissDirection.endToStart, // 从右向左滑动
-                            secondaryBackground: Container(
-                              color: Color(0x00000000),
-                              alignment: Alignment.centerRight,
-                              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                              child: SizedBox(
-                                width: 60,
-                                height: 100,
-                                child: Image.asset('assets/images/bg_delete.webp'),
+                  if (RecordManager.getRecordsByFeeling(
+                          DataUtils.textFeelingRecord[imgFeelState])
+                      .isNotEmpty)
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          scrollDirection: Axis.vertical,
+                          itemCount: RecordManager.getRecordsByFeeling(
+                                  DataUtils.textFeelingRecord[imgFeelState])
+                              .length,
+                          itemBuilder: (context, index) {
+                            final record = RecordManager.getRecordsByFeeling(
+                                DataUtils
+                                    .textFeelingRecord[imgFeelState])[index];
+                            return Dismissible(
+                              key: Key(record.id.toString()),
+                              // 唯一标识符
+                              direction: DismissDirection.endToStart,
+                              // 从右向左滑动
+                              secondaryBackground: Container(
+                                color: Color(0x00000000),
+                                alignment: Alignment.centerRight,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20.0),
+                                child: SizedBox(
+                                  width: 60,
+                                  height: 100,
+                                  child: Image.asset(
+                                      'assets/images/bg_delete.webp'),
+                                ),
                               ),
-                            ),
-                            background: Container(
-                              color: Colors.transparent,
-                              alignment: Alignment.centerRight,
-                              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                              child: SizedBox(
-                                width: 60,
-                                height: 100,
-                                child: Image.asset('assets/images/bg_delete.webp'),
+                              background: Container(
+                                color: Colors.transparent,
+                                alignment: Alignment.centerRight,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20.0),
+                                child: SizedBox(
+                                  width: 60,
+                                  height: 100,
+                                  child: Image.asset(
+                                      'assets/images/bg_delete.webp'),
+                                ),
                               ),
-                            ),
-                            onDismissed: (direction) {
-                              // 删除记录并刷新列表
-                              RecordManager.deleteRecord(record.id);
-                              setState(() {});
-                            },
-                            confirmDismiss: (direction) async {
-                              // 可以在这里添加确认对话框
-                              return await showDialog(
-                                context: context,
-                                builder: (BuildContext context) {
-                                  return AlertDialog(
-                                    title: const Text("Confirm deletion"),
-                                    content: const Text("Are you sure you want to delete this record?"),
-                                    actions: <Widget>[
-                                      TextButton(
-                                        onPressed: () => Navigator.of(context).pop(false),
-                                        child: const Text("Cancel"),
-                                      ),
-                                      TextButton(
-                                        onPressed: () => Navigator.of(context).pop(true),
-                                        child: const Text("delete"),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              );
-                            },
-                            child: GestureDetector(
-                              onTap: () {
-                                backRefFun(index);
+                              onDismissed: (direction) {
+                                // 删除记录并刷新列表
+                                RecordManager.deleteRecord(record.id);
+                                setState(() {});
                               },
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8),
-                                child: Container(
-                                  width: double.infinity,
-                                  decoration: const BoxDecoration(
-                                    image: DecorationImage(
-                                      image: AssetImage('assets/images/bg_record.webp'),
-                                      fit: BoxFit.fill,
+                              confirmDismiss: (direction) async {
+                                // 可以在这里添加确认对话框
+                                return await showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return AlertDialog(
+                                      title: const Text("Confirm deletion"),
+                                      content: const Text(
+                                          "Are you sure you want to delete this record?"),
+                                      actions: <Widget>[
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.of(context).pop(false),
+                                          child: const Text("Cancel"),
+                                        ),
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.of(context).pop(true),
+                                          child: const Text("delete"),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+                              },
+                              child: GestureDetector(
+                                onTap: () {
+                                  backRefFun(index);
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20.0, vertical: 8),
+                                  child: Container(
+                                    width: double.infinity,
+                                    decoration: const BoxDecoration(
+                                      image: DecorationImage(
+                                        image: AssetImage(
+                                            'assets/images/bg_record.webp'),
+                                        fit: BoxFit.fill,
+                                      ),
                                     ),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16),
-                                    child: Center(
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: Column(
-                                          children: [
-                                            Row(
-                                              children: [
-                                                Column(
-                                                  children: [
-                                                    Container(
-                                                      decoration: BoxDecoration(
-                                                        color: const Color(0xFF038DDB),
-                                                        borderRadius: BorderRadius.circular(10),
-                                                      ),
-                                                      child: Padding(
-                                                        padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 5),
-                                                        child: Text(
-                                                          DataUtils.textWeather[record.weather],
-                                                          style: const TextStyle(
-                                                            fontSize: 12,
-                                                            color: Color(0xFFFFFFFF),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 16.0, vertical: 16),
+                                      child: Center(
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Column(
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  Column(
+                                                    children: [
+                                                      Container(
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          color: const Color(
+                                                              0xFF038DDB),
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(10),
+                                                        ),
+                                                        child: Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .symmetric(
+                                                                  horizontal:
+                                                                      15.0,
+                                                                  vertical: 5),
+                                                          child: Text(
+                                                            DataUtils
+                                                                    .textWeather[
+                                                                record.weather],
+                                                            style:
+                                                                const TextStyle(
+                                                              fontSize: 12,
+                                                              color: Color(
+                                                                  0xFFFFFFFF),
+                                                            ),
                                                           ),
                                                         ),
                                                       ),
-                                                    ),
-                                                    const SizedBox(height: 10),
-                                                    Container(
-                                                      decoration: BoxDecoration(
-                                                        color: Color(0xFF59B710),
-                                                        borderRadius: BorderRadius.circular(10),
-                                                      ),
-                                                      child: Padding(
-                                                        padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 5),
-                                                        child: Text(
-                                                          DataUtils.textFeeling[record.feeling],
-                                                          style: const TextStyle(
-                                                            fontSize: 12,
-                                                            color: Color(0xFFFFFFFF),
+                                                      const SizedBox(
+                                                          height: 10),
+                                                      Container(
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          color:
+                                                              Color(0xFF59B710),
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(10),
+                                                        ),
+                                                        child: Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .symmetric(
+                                                                  horizontal:
+                                                                      15.0,
+                                                                  vertical: 5),
+                                                          child: Text(
+                                                            DataUtils
+                                                                    .textFeeling[
+                                                                record.feeling],
+                                                            style:
+                                                                const TextStyle(
+                                                              fontSize: 12,
+                                                              color: Color(
+                                                                  0xFFFFFFFF),
+                                                            ),
                                                           ),
                                                         ),
                                                       ),
+                                                    ],
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  Expanded(
+                                                    child: Text(
+                                                      record.information,
+                                                      maxLines: 3,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      style: const TextStyle(
+                                                        fontSize: 12,
+                                                        color:
+                                                            Color(0xFFFFFFFF),
+                                                      ),
                                                     ),
-                                                  ],
-                                                ),
-                                                const SizedBox(width: 8),
-                                                Expanded(
-                                                  child: Text(
-                                                    record.information,
-                                                    maxLines: 3,
-                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                ],
+                                              ),
+                                              Row(
+                                                mainAxisSize: MainAxisSize.max,
+                                                children: [
+                                                  Spacer(),
+                                                  Text(
+                                                    RecordBean
+                                                        .getTimeFromTimestamp(
+                                                            record.date),
                                                     style: const TextStyle(
-                                                      fontSize: 12,
-                                                      color: Color(0xFFFFFFFF),
+                                                      fontSize: 10,
+                                                      color: Color(0xFFACB1C6),
                                                     ),
                                                   ),
-                                                ),
-                                              ],
-                                            ),
-                                            Row(
-                                              mainAxisSize: MainAxisSize.max,
-                                              children: [
-                                                Spacer(),
-                                                Text(
-                                                  RecordBean.getTimeFromTimestamp(record.date),
-                                                  style: const TextStyle(
-                                                    fontSize: 10,
-                                                    color: Color(0xFFACB1C6),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
+                                                ],
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       ),
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
-                          );
-                        },
+                            );
+                          },
+                        ),
                       ),
                     ),
-                  ),
-                  if(RecordManager.getRecordsByFeeling(DataUtils.textFeelingRecord[imgFeelState]).isEmpty)
+                  if (RecordManager.getRecordsByFeeling(
+                          DataUtils.textFeelingRecord[imgFeelState])
+                      .isEmpty)
                     Column(
                       children: [
                         SizedBox(
@@ -384,7 +483,6 @@ class _RecordPageState extends State<RecordPage> {
                             ),
                           ),
                         ),
-
                       ],
                     ),
                 ],

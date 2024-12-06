@@ -5,6 +5,8 @@ import 'package:night_trips/DetailPage.dart';
 import 'package:night_trips/data/DataSetGet.dart';
 import 'package:night_trips/data/DataUtils.dart';
 import 'package:night_trips/data/RecordBean.dart';
+import 'package:night_trips/showint/AdShowui.dart';
+import 'package:night_trips/showint/ShowAdFun.dart';
 import 'package:night_trips/sleep/SleepPage.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -23,16 +25,38 @@ class MainApp extends StatefulWidget {
 class _MainAppState extends State<MainApp> {
   bool qrLoading = false;
   bool createDialog = false;
+  late ShowAdFun adManager;
+  final AdShowui _loadingOverlay = AdShowui();
 
   @override
   void initState() {
     super.initState();
     getListData();
+    adManager = DataSetGet.getMobUtils(context);
   }
 
   @override
   void dispose() {
     super.dispose();
+  }
+
+  void showAdNextPaper(AdWhere adWhere, Function() nextJump) async {
+    if (!adManager.canShowAd(adWhere)) {
+      adManager.loadAd(adWhere);
+    }
+    setState(() {
+      _loadingOverlay.show(context);
+    });
+    DataSetGet.showScanAd(context, adWhere, 5, () {
+      setState(() {
+        _loadingOverlay.hide();
+      });
+    }, () {
+      setState(() {
+        _loadingOverlay.hide();
+      });
+      nextJump();
+    });
   }
 
   void getListData() async {
@@ -53,36 +77,43 @@ class _MainAppState extends State<MainApp> {
   }
 
   void goRecordPage() async {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const RecordPage(),
-      ),
-    ).then((value) {
-      getListData();
+    showAdNextPaper(AdWhere.SAVE, () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const RecordPage(),
+        ),
+      ).then((value) {
+        getListData();
+      });
     });
   }
 
-  void goAddPage()  {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const AddPage(),
-      ),
-    ).then((value) {
-      print("object--goAddPage---");
-      getListData();
+  void goAddPage() {
+    showAdNextPaper(AdWhere.SAVE, () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const AddPage(),
+        ),
+      ).then((value) {
+        print("object--goAddPage---");
+        getListData();
+      });
     });
   }
 
-  void goSleepPage()  {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const SleepPage(),
-      ),
-    );
+  void goSleepPage() {
+    showAdNextPaper(AdWhere.SAVE, () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const SleepPage(),
+        ),
+      );
+    });
   }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -294,7 +325,8 @@ class _MainAppState extends State<MainApp> {
                                       Container(
                                         decoration: BoxDecoration(
                                           color: Color(0xFF59B710),
-                                          borderRadius: BorderRadius.circular(13),
+                                          borderRadius:
+                                              BorderRadius.circular(13),
                                         ),
                                         child: const Padding(
                                           padding: EdgeInsets.symmetric(
@@ -357,183 +389,191 @@ class _MainAppState extends State<MainApp> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  if(RecordManager.events.isNotEmpty)
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        scrollDirection: Axis.vertical,
-                        itemCount: RecordManager.events.length,
-                        itemBuilder: (context, index) {
-                          return GestureDetector(
-                            onTap: () {
-                              backRefFun(index);
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 20.0, vertical: 8),
-                              child: Container(
-                                width: double.infinity,
-                                decoration: const BoxDecoration(
-                                  image: DecorationImage(
-                                    image: AssetImage(
-                                        'assets/images/bg_record.webp'),
-                                    fit: BoxFit.fill,
+                  if (RecordManager.events.isNotEmpty)
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          scrollDirection: Axis.vertical,
+                          itemCount: RecordManager.events.length,
+                          itemBuilder: (context, index) {
+                            return GestureDetector(
+                              onTap: () {
+                                backRefFun(index);
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20.0, vertical: 8),
+                                child: Container(
+                                  width: double.infinity,
+                                  decoration: const BoxDecoration(
+                                    image: DecorationImage(
+                                      image: AssetImage(
+                                          'assets/images/bg_record.webp'),
+                                      fit: BoxFit.fill,
+                                    ),
                                   ),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 16.0, vertical: 16),
-                                  child: Center(
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Column(
-                                        children: [
-                                          Row(
-                                            children: [
-                                              Column(
-                                                children: [
-                                                  Container(
-                                                    decoration: BoxDecoration(
-                                                      color: const Color(
-                                                          0xFF038DDB),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              10),
-                                                    ),
-                                                    child: Padding(
-                                                      padding: const EdgeInsets
-                                                          .symmetric(
-                                                          horizontal: 15.0,
-                                                          vertical: 5),
-                                                      child: Text(
-                                                        DataUtils.textWeather[
-                                                            RecordManager
-                                                                .events[index]
-                                                                .weather],
-                                                        style: const TextStyle(
-                                                          fontSize: 12,
-                                                          color:
-                                                              Color(0xFFFFFFFF),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16.0, vertical: 16),
+                                    child: Center(
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Column(
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Column(
+                                                  children: [
+                                                    Container(
+                                                      decoration: BoxDecoration(
+                                                        color: const Color(
+                                                            0xFF038DDB),
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(10),
+                                                      ),
+                                                      child: Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .symmetric(
+                                                                horizontal:
+                                                                    15.0,
+                                                                vertical: 5),
+                                                        child: Text(
+                                                          DataUtils.textWeather[
+                                                              RecordManager
+                                                                  .events[index]
+                                                                  .weather],
+                                                          style:
+                                                              const TextStyle(
+                                                            fontSize: 12,
+                                                            color: Color(
+                                                                0xFFFFFFFF),
+                                                          ),
                                                         ),
                                                       ),
                                                     ),
-                                                  ),
-                                                  const SizedBox(height: 10),
-                                                  Container(
-                                                    decoration: BoxDecoration(
-                                                      color: Color(0xFF59B710),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              10),
-                                                    ),
-                                                    child: Padding(
-                                                      padding: const EdgeInsets
-                                                          .symmetric(
-                                                          horizontal: 15.0,
-                                                          vertical: 5),
-                                                      child: Text(
-                                                        DataUtils.textFeeling[
-                                                            RecordManager
-                                                                .events[index]
-                                                                .feeling],
-                                                        style: const TextStyle(
-                                                          fontSize: 12,
-                                                          color:
-                                                              Color(0xFFFFFFFF),
+                                                    const SizedBox(height: 10),
+                                                    Container(
+                                                      decoration: BoxDecoration(
+                                                        color:
+                                                            Color(0xFF59B710),
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(10),
+                                                      ),
+                                                      child: Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .symmetric(
+                                                                horizontal:
+                                                                    15.0,
+                                                                vertical: 5),
+                                                        child: Text(
+                                                          DataUtils.textFeeling[
+                                                              RecordManager
+                                                                  .events[index]
+                                                                  .feeling],
+                                                          style:
+                                                              const TextStyle(
+                                                            fontSize: 12,
+                                                            color: Color(
+                                                                0xFFFFFFFF),
+                                                          ),
                                                         ),
                                                       ),
                                                     ),
+                                                  ],
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Expanded(
+                                                  child: Text(
+                                                    RecordManager.events[index]
+                                                        .information,
+                                                    maxLines: 3,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                      color: Color(0xFFFFFFFF),
+                                                    ),
                                                   ),
-                                                ],
-                                              ),
-                                              const SizedBox(width: 8),
-                                              Expanded(
-                                                child: Text(
-                                                  RecordManager.events[index]
-                                                      .information,
-                                                  maxLines: 3,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ],
+                                            ),
+                                            Row(
+                                              mainAxisSize: MainAxisSize.max,
+                                              children: [
+                                                Spacer(),
+                                                Text(
+                                                  RecordBean
+                                                      .getTimeFromTimestamp(
+                                                          RecordManager
+                                                              .events[index]
+                                                              .date),
                                                   style: const TextStyle(
-                                                    fontSize: 12,
-                                                    color: Color(0xFFFFFFFF),
+                                                    fontSize: 10,
+                                                    color: Color(0xFFACB1C6),
                                                   ),
                                                 ),
-                                              ),
-                                            ],
-                                          ),
-                                          Row(
-                                            mainAxisSize: MainAxisSize.max,
-                                            children: [
-                                              Spacer(),
-                                              Text(
-                                                RecordBean.getTimeFromTimestamp(
-                                                    RecordManager
-                                                        .events[index].date),
-                                                style: const TextStyle(
-                                                  fontSize: 10,
-                                                  color: Color(0xFFACB1C6),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
+                                              ],
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                  if(RecordManager.events.isEmpty)
-                  Column(
-                    children: [
-                      SizedBox(
-                        width: 140,
-                        height: 140,
-                        child: Image.asset('assets/images/ic_emp_data.webp'),
-                      ),
-                      const Text(
-                        'There are no diary entries recorded here yet. Start recording now!',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFFFFFFFF),
+                            );
+                          },
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(top: 48),
-                        child: GestureDetector(
-                          onTap: () {
-                            goAddPage();
-                          },
-                          child: Container(
-                            width: 243,
-                            height: 56,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF31429D),
-                              borderRadius: BorderRadius.circular(36),
-                            ),
-                            child: const Center(
-                              child: Text(
-                                'GO',
-                                style: TextStyle(
-                                  color: Color(0xFFFFFFFF),
-                                  fontSize: 16,
+                    ),
+                  if (RecordManager.events.isEmpty)
+                    Column(
+                      children: [
+                        SizedBox(
+                          width: 140,
+                          height: 140,
+                          child: Image.asset('assets/images/ic_emp_data.webp'),
+                        ),
+                        const Text(
+                          'There are no diary entries recorded here yet. Start recording now!',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFFFFFFFF),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 48),
+                          child: GestureDetector(
+                            onTap: () {
+                              goAddPage();
+                            },
+                            child: Container(
+                              width: 243,
+                              height: 56,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF31429D),
+                                borderRadius: BorderRadius.circular(36),
+                              ),
+                              child: const Center(
+                                child: Text(
+                                  'GO',
+                                  style: TextStyle(
+                                    color: Color(0xFFFFFFFF),
+                                    fontSize: 16,
+                                  ),
                                 ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-
-                    ],
-                  ),
+                      ],
+                    ),
                 ],
               ),
             ]),
@@ -542,6 +582,7 @@ class _MainAppState extends State<MainApp> {
       ]),
     );
   }
+
   void _shareText() async {
     //TODO: Replace with your own url
     try {
@@ -550,6 +591,7 @@ class _MainAppState extends State<MainApp> {
       print('Error sharing text: $e');
     }
   }
+
   void _launchPPURL() async {
     //TODO: Replace with your own url
     const url = 'https://flutterchina.club/';

@@ -3,14 +3,18 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LocalStorage {
+  static GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+  static String clockData = "bbbbbllllck";
   static String dateList = "dateListjson";
   static String bgImageList = "bgImageList";
   static String muIndex = "muIndex";
   static String bgIndex = "bgIndex";
   static String djsTime = "djsTime";
-
+  static bool clone_ad = false;
   static String volumeData = "volumeData";
-
+  static bool isInBack = false;
+  static bool int_ad_show = false;
+  static String umpState = "uuuuuummmppp";
   static final LocalStorage _instance = LocalStorage._internal();
   late SharedPreferences _prefs;
   static String clickFeelId = "";

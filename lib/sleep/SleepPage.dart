@@ -6,6 +6,8 @@ import 'package:audioplayers/audioplayers.dart';
 import 'dart:async';
 import '../data/DataUtils.dart';
 import '../data/LocalStorage.dart';
+import '../showint/AdShowui.dart';
+import '../showint/ShowAdFun.dart';
 
 class SleepPage extends StatefulWidget {
   const SleepPage({super.key});
@@ -19,11 +21,13 @@ class _SleepPageState extends State<SleepPage> {
   int indexBg = 0;
   final AudioPlayer _audioPlayer = AudioPlayer();
   Timer? _timer;
-  int _remainingTime = 15 * 60; // 初始时间 30 分钟（单位：秒）
-  int _volume = 50; // 音量 0-100
-  int _maxTime = 60 * 120; // 上限时间 120 分钟
-  int _minTime = 60 * 5; // 下限时间 5 秒
-  double _currentVolume = 0.5; // 当前音量 [0.0, 1.0]
+  int _remainingTime = 15 * 60;
+  int _volume = 50;
+  int _maxTime = 60 * 120;
+  int _minTime = 60 * 5;
+  double _currentVolume = 0.5;
+  late ShowAdFun adManager;
+  final AdShowui _loadingOverlay = AdShowui();
   void _onPlayStatusChanged(bool isPlaying) {
     setState(() {
       _isPlaying = isPlaying;
@@ -33,6 +37,7 @@ class _SleepPageState extends State<SleepPage> {
   @override
   void initState() {
     super.initState();
+    adManager = DataSetGet.getMobUtils(context);
     setBgIndex();
   }
 
@@ -276,11 +281,36 @@ class _SleepPageState extends State<SleepPage> {
     );
   }
 
+
+  void showAdNextPaper(AdWhere adWhere, Function() nextJump) async {
+    if (!adManager.canShowAd(adWhere)) {
+      adManager.loadAd(adWhere);
+    }
+    setState(() {
+      _loadingOverlay.show(context);
+    });
+    DataSetGet.showScanAd(context, adWhere, 5, () {
+      setState(() {
+        _loadingOverlay.hide();
+      });
+    }, () {
+      setState(() {
+        _loadingOverlay.hide();
+      });
+      nextJump();
+    });
+  }
+
+  void nextJump() {
+    Navigator.pop(context);
+  }
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        Navigator.pop(context);
+        showAdNextPaper(AdWhere.BACKINT, () {
+          nextJump();
+        });
         return false;
       },
       child: Scaffold(
@@ -303,7 +333,9 @@ class _SleepPageState extends State<SleepPage> {
                   children: [
                     GestureDetector(
                       onTap: () {
-                        Navigator.pop(context);
+                        showAdNextPaper(AdWhere.BACKINT, () {
+                          nextJump();
+                        });
                       },
                       child: SizedBox(
                         width: 32,

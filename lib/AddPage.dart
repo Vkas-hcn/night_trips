@@ -9,7 +9,10 @@ import 'package:intl/intl.dart';
 import 'package:night_trips/cus/ImageDialog.dart';
 import 'package:night_trips/data/DataSetGet.dart';
 import 'package:night_trips/data/DataUtils.dart';
+import 'package:night_trips/data/LocalStorage.dart';
 import 'package:night_trips/data/RecordBean.dart';
+import 'package:night_trips/showint/AdShowui.dart';
+import 'package:night_trips/showint/ShowAdFun.dart';
 import 'package:night_trips/sleep/SleepPage.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -35,18 +38,44 @@ class _AddPageState extends State<AddPage> {
   bool showImage = false;
   int indexBg = 0;
   bool showDialogState = false;
+  late ShowAdFun adManager;
+  final AdShowui _loadingOverlay = AdShowui();
 
   @override
   void initState() {
     super.initState();
     setPageInFormation();
     feelController.addListener(showWeightController);
+    adManager = DataSetGet.getMobUtils(context);
   }
 
   @override
   void dispose() {
-    feelController.dispose(); // 清理控制器
+    feelController.dispose();
     super.dispose();
+  }
+
+  void showAdNextPaper(AdWhere adWhere, Function() nextJump) async {
+    if (!adManager.canShowAd(adWhere)) {
+      adManager.loadAd(adWhere);
+    }
+    setState(() {
+      _loadingOverlay.show(context);
+    });
+    DataSetGet.showScanAd(context, adWhere, 5, () {
+      setState(() {
+        _loadingOverlay.hide();
+      });
+    }, () {
+      setState(() {
+        _loadingOverlay.hide();
+      });
+      nextJump();
+    });
+  }
+
+  void nextJump() {
+    Navigator.pop(context);
   }
 
   void setPageInFormation() {
@@ -67,15 +96,16 @@ class _AddPageState extends State<AddPage> {
   }
 
   Future<void> pickImage() async {
+    LocalStorage.int_ad_show = true;
     final ImagePicker picker = ImagePicker();
     final List<XFile>? images = await picker.pickMultiImage(
       imageQuality: 90,
       maxWidth: 1080,
     );
-
     if (images != null && images.isNotEmpty) {
-      final directory = await getApplicationDocumentsDirectory();
 
+      final directory = await getApplicationDocumentsDirectory();
+      LocalStorage.int_ad_show = false;
       for (final image in images) {
         if (bgImageList.length >= 3) {
           Fluttertoast.showToast(msg: "You can only select up to 3 images");
@@ -103,6 +133,11 @@ class _AddPageState extends State<AddPage> {
           bgImageList.insert(0, newImage.path);
         });
       }
+    }else{
+      //延迟1秒
+      Future.delayed(Duration(seconds: 1), () {
+        LocalStorage.int_ad_show = false;
+      });
     }
   }
 
@@ -223,7 +258,6 @@ class _AddPageState extends State<AddPage> {
       RecordManager.addRecord(event);
       Fluttertoast.showToast(msg: "Saved Successfully");
     });
-
   }
 
   void jumpBack(RecordBean event) async {
@@ -245,7 +279,9 @@ class _AddPageState extends State<AddPage> {
     formattedDate = DateFormat('yyyy/MM/dd').format(selectedDate);
     return WillPopScope(
       onWillPop: () async {
-        Navigator.pop(context);
+        showAdNextPaper(AdWhere.BACKINT, () {
+          nextJump();
+        });
         return false;
       },
       child: Scaffold(
@@ -272,7 +308,9 @@ class _AddPageState extends State<AddPage> {
                         padding: const EdgeInsets.only(left: 20),
                         child: GestureDetector(
                           onTap: () {
-                            Navigator.pop(context);
+                            showAdNextPaper(AdWhere.BACKINT, () {
+                              nextJump();
+                            });
                           },
                           child: SizedBox(
                             width: 32,
@@ -632,7 +670,9 @@ class _AddPageState extends State<AddPage> {
                     padding: const EdgeInsets.only(top: 16),
                     child: GestureDetector(
                       onTap: () {
-                        saveData();
+                        showAdNextPaper(AdWhere.SAVE, () {
+                          saveData();
+                        });
                       },
                       child: Container(
                         width: 243,

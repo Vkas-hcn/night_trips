@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:night_trips/showint/Get2Data.dart';
 
 import 'Guide.dart';
 import 'data/LocalStorage.dart';
@@ -21,7 +22,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: MyHomePage(),
+      navigatorKey: LocalStorage.navigatorKey,
+      home: const MyHomePage(),
     );
   }
 }
@@ -37,12 +39,17 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
+    getBack();
     print("object=================main");
     WidgetsBinding.instance.addPostFrameCallback((_) {
       pageToHome();
     });
   }
 
+  void getBack() {
+    Get2Data().getBlackList(context);
+
+  }
 
   void pageToHome() {
     Navigator.pushAndRemoveUntil(

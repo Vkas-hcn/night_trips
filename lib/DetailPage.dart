@@ -6,6 +6,8 @@ import 'package:night_trips/AddPage.dart';
 import 'package:night_trips/data/DataSetGet.dart';
 import 'package:night_trips/data/DataUtils.dart';
 import 'package:night_trips/data/RecordBean.dart';
+import 'package:night_trips/showint/AdShowui.dart';
+import 'package:night_trips/showint/ShowAdFun.dart';
 
 import 'cus/ImageDialog.dart';
 
@@ -23,10 +25,14 @@ class _DetailPageState extends State<DetailPage> {
   bool showImage = false;
   List<String> bgImageList = [];
   final feelController = TextEditingController();
-  late RecordBean _currentRecordBean; // 新增的可变变量
+  late RecordBean _currentRecordBean;
+  late ShowAdFun adManager;
+  final AdShowui _loadingOverlay = AdShowui();
+
   @override
   void initState() {
     super.initState();
+    adManager = DataSetGet.getMobUtils(context);
     feelController.addListener(showWeightController);
     _currentRecordBean = widget.recordBean; // 初始化新变量
     setState(() {
@@ -57,13 +63,13 @@ class _DetailPageState extends State<DetailPage> {
 
       setState(() {
         _currentRecordBean = result; // 更新 _currentRecordBean
-        bgImageList = List<String>.from(json.decode(_currentRecordBean.bgList)); // 更新背景图片列表
+        bgImageList = List<String>.from(
+            json.decode(_currentRecordBean.bgList)); // 更新背景图片列表
       });
     } else {
       print("Result is not of type RecordBean or is null");
     }
   }
-
 
   void showImageDialog(BuildContext context, int index) {
     showDialog(
@@ -77,11 +83,48 @@ class _DetailPageState extends State<DetailPage> {
     );
   }
 
+  void showLoading() {
+    setState(() {
+      _loadingOverlay.show(context);
+    });
+  }
+
+  void hideLoading() {
+    setState(() {
+      _loadingOverlay.hide();
+    });
+  }
+
+  void showAdNextPaper(AdWhere adWhere, Function() nextJump) async {
+    if (!adManager.canShowAd(adWhere)) {
+      adManager.loadAd(adWhere);
+    }
+    setState(() {
+      _loadingOverlay.show(context);
+    });
+    DataSetGet.showScanAd(context, adWhere, 5, () {
+      setState(() {
+        _loadingOverlay.hide();
+      });
+    }, () {
+      setState(() {
+        _loadingOverlay.hide();
+      });
+      nextJump();
+    });
+  }
+
+  void nextJump() {
+    Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        Navigator.pop(context);
+        showAdNextPaper(AdWhere.BACKINT, () {
+          nextJump();
+        });
         return false;
       },
       child: Scaffold(
@@ -97,7 +140,8 @@ class _DetailPageState extends State<DetailPage> {
               ),
             ),
             child: Padding(
-              padding: const EdgeInsets.only(top: 56, right: 20, left: 20, bottom: 20),
+              padding: const EdgeInsets.only(
+                  top: 56, right: 20, left: 20, bottom: 20),
               child: Column(
                 mainAxisSize: MainAxisSize.max,
                 children: [
@@ -106,7 +150,9 @@ class _DetailPageState extends State<DetailPage> {
                     children: [
                       GestureDetector(
                         onTap: () {
-                          Navigator.pop(context);
+                          showAdNextPaper(AdWhere.BACKINT, () {
+                            nextJump();
+                          });
                         },
                         child: SizedBox(
                           width: 32,
@@ -132,7 +178,8 @@ class _DetailPageState extends State<DetailPage> {
                       SizedBox(
                         width: 56,
                         height: 56,
-                        child: Image.asset(DataUtils.imagesFeeling[_currentRecordBean.feeling]),
+                        child: Image.asset(DataUtils
+                            .imagesFeeling[_currentRecordBean.feeling]),
                       ),
                       SizedBox(
                         width: 202,
@@ -151,7 +198,8 @@ class _DetailPageState extends State<DetailPage> {
                       ),
                     ),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0, vertical: 20),
                       child: Column(
                         children: [
                           // Scrollable Text area
@@ -222,7 +270,6 @@ class _DetailPageState extends State<DetailPage> {
       ),
     );
   }
-
 }
 
 class CustomCircle extends StatelessWidget {
