@@ -26,8 +26,8 @@ class _SleepPageState extends State<SleepPage> {
   int _maxTime = 60 * 120;
   int _minTime = 60 * 5;
   double _currentVolume = 0.5;
-  late ShowAdFun adManager;
-  final AdShowui _loadingOverlay = AdShowui();
+  // late ShowAdFun adManager;
+  // final AdShowui _loadingOverlay = AdShowui();
   void _onPlayStatusChanged(bool isPlaying) {
     setState(() {
       _isPlaying = isPlaying;
@@ -37,7 +37,7 @@ class _SleepPageState extends State<SleepPage> {
   @override
   void initState() {
     super.initState();
-    adManager = DataSetGet.getMobUtils(context);
+    // adManager = DataSetGet.getMobUtils(context);
     setBgIndex();
   }
 
@@ -282,24 +282,24 @@ class _SleepPageState extends State<SleepPage> {
   }
 
 
-  void showAdNextPaper(AdWhere adWhere, Function() nextJump) async {
-    if (!adManager.canShowAd(adWhere)) {
-      adManager.loadAd(adWhere);
-    }
-    setState(() {
-      _loadingOverlay.show(context);
-    });
-    DataSetGet.showScanAd(context, adWhere, 5, () {
-      setState(() {
-        _loadingOverlay.hide();
-      });
-    }, () {
-      setState(() {
-        _loadingOverlay.hide();
-      });
-      nextJump();
-    });
-  }
+  // void showAdNextPaper(AdWhere adWhere, Function() nextJump) async {
+  //   if (!adManager.canShowAd(adWhere)) {
+  //     adManager.loadAd(adWhere);
+  //   }
+  //   setState(() {
+  //     _loadingOverlay.show(context);
+  //   });
+  //   DataSetGet.showScanAd(context, adWhere, 5, () {
+  //     setState(() {
+  //       _loadingOverlay.hide();
+  //     });
+  //   }, () {
+  //     setState(() {
+  //       _loadingOverlay.hide();
+  //     });
+  //     nextJump();
+  //   });
+  // }
 
   void nextJump() {
     Navigator.pop(context);
@@ -308,9 +308,7 @@ class _SleepPageState extends State<SleepPage> {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        showAdNextPaper(AdWhere.BACKINT, () {
           nextJump();
-        });
         return false;
       },
       child: Scaffold(
@@ -333,9 +331,7 @@ class _SleepPageState extends State<SleepPage> {
                   children: [
                     GestureDetector(
                       onTap: () {
-                        showAdNextPaper(AdWhere.BACKINT, () {
                           nextJump();
-                        });
                       },
                       child: SizedBox(
                         width: 32,

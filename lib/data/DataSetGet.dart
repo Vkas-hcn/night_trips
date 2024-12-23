@@ -13,10 +13,10 @@ import 'LocalStorage.dart';
 class DataSetGet {
   static List<String> images = [];
 
-  static ShowAdFun getMobUtils(BuildContext context) {
-    final adManager = ShowAdFun(context);
-    return adManager;
-  }
+  // static ShowAdFun getMobUtils(BuildContext context) {
+  //   final adManager = ShowAdFun(context);
+  //   return adManager;
+  // }
 // 获取持久化路径
   static Future<String> getPersistentImagePath(String originalPath) async {
     final Directory appDocDir = await getApplicationDocumentsDirectory();
@@ -121,114 +121,66 @@ class DataSetGet {
   }
 
 
-  static Future<void> showScanAd2(
-      BuildContext context,
-      AdWhere adPosition,
-      int moreTime,
-      Function() loadingFun,
-      Function() nextFun,
-      ) async {
-    final Completer<void> completer = Completer<void>();
-    var isCancelled = false;
-
-    void cancel() {
-      isCancelled = true;
-      completer.complete();
-    }
-
-    Future<void> _checkAndShowAd() async {
-      bool colckState = await ShowAdFun.blacklistBlocking();
-      if (colckState) {
-        nextFun();
-        return;
-      }
-      if (!getMobUtils(context).canShowAd(adPosition)) {
-        getMobUtils(context).loadAd(adPosition);
-      }
-
-      if (getMobUtils(context).canShowAd(adPosition)) {
-        loadingFun();
-        getMobUtils(context).showAd(context, adPosition, nextFun);
-        return;
-      }
-      if (!isCancelled) {
-        await Future.delayed(const Duration(milliseconds: 500));
-        await _checkAndShowAd();
-      }
-    }
-
-    Future.delayed(Duration(seconds: moreTime), cancel);
-    await Future.any([
-      _checkAndShowAd(),
-      completer.future,
-    ]);
-
-    if (!completer.isCompleted) {
-      return;
-    }
-    print("插屏广告展示超时");
-    nextFun();
-  }
-
-  static Future<void> showScanAd(
-      BuildContext context,
-      AdWhere adPosition,
-      int moreTime,
-      Function() loadingFun,
-      Function() nextFun,
-      ) async {
-    final Completer<void> completer = Completer<void>();
-    var isCancelled = false;
-
-    void cancel() {
-      isCancelled = true;
-      completer.complete();
-    }
-
-    Future<void> _checkAndShowAd() async {
-      bool colckState = await ShowAdFun.blacklistBlocking();
-      if (colckState) {
-        nextFun();
-        return;
-      }
-
-      // 判断广告是否可以展示
-      if (!getMobUtils(context).canShowAd(adPosition)) {
-        // 加载广告
-        getMobUtils(context).loadAd(adPosition);
-      }
-
-      // 等待广告加载完成
-      if (getMobUtils(context).canShowAd(adPosition)) {
-        loadingFun();
-        getMobUtils(context).showAd(context, adPosition, () {
-          // 广告展示后，确保广告数据被清理
-          getMobUtils(context).clearAdCache(adPosition);  // 清理广告缓存
-          getMobUtils(context).loadAd(adPosition);  // 重新加载广告
-          nextFun();
-        });
-        return;
-      }
-
-      // 如果广告未加载成功，重新检查
-      if (!isCancelled) {
-        await Future.delayed(const Duration(milliseconds: 500));
-        await _checkAndShowAd();
-      }
-    }
-
-    // 超过指定时间取消广告展示
-    Future.delayed(Duration(seconds: moreTime), cancel);
-    await Future.any([
-      _checkAndShowAd(),
-      completer.future,
-    ]);
-
-    if (!completer.isCompleted) {
-      return;
-    }
-    print("插屏广告展示超时");
-    nextFun();
-  }
+  //
+  // static Future<void> showScanAd(
+  //     BuildContext context,
+  //     AdWhere adPosition,
+  //     int moreTime,
+  //     Function() loadingFun,
+  //     Function() nextFun,
+  //     ) async {
+  //   final Completer<void> completer = Completer<void>();
+  //   var isCancelled = false;
+  //
+  //   void cancel() {
+  //     isCancelled = true;
+  //     completer.complete();
+  //   }
+  //
+  //   Future<void> _checkAndShowAd() async {
+  //     bool colckState = await ShowAdFun.blacklistBlocking();
+  //     if (colckState) {
+  //       nextFun();
+  //       return;
+  //     }
+  //
+  //     // 判断广告是否可以展示
+  //     if (!getMobUtils(context).canShowAd(adPosition)) {
+  //       // 加载广告
+  //       getMobUtils(context).loadAd(adPosition);
+  //     }
+  //
+  //     // 等待广告加载完成
+  //     if (getMobUtils(context).canShowAd(adPosition)) {
+  //       loadingFun();
+  //       getMobUtils(context).showAd(context, adPosition, () {
+  //         // 广告展示后，确保广告数据被清理
+  //         getMobUtils(context).clearAdCache(adPosition);  // 清理广告缓存
+  //         getMobUtils(context).loadAd(adPosition);  // 重新加载广告
+  //         nextFun();
+  //       });
+  //       return;
+  //     }
+  //
+  //     // 如果广告未加载成功，重新检查
+  //     if (!isCancelled) {
+  //       await Future.delayed(const Duration(milliseconds: 500));
+  //       await _checkAndShowAd();
+  //     }
+  //   }
+  //
+  //   // 超过指定时间取消广告展示
+  //   Future.delayed(Duration(seconds: moreTime), cancel);
+  //   await Future.any([
+  //     _checkAndShowAd(),
+  //     completer.future,
+  //   ]);
+  //
+  //   if (!completer.isCompleted) {
+  //     return;
+  //   }
+  //   print("插屏广告展示超时");
+  //   nextFun();
+  // }
 
 }

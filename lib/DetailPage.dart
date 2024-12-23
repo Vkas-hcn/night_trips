@@ -26,13 +26,10 @@ class _DetailPageState extends State<DetailPage> {
   List<String> bgImageList = [];
   final feelController = TextEditingController();
   late RecordBean _currentRecordBean;
-  late ShowAdFun adManager;
-  final AdShowui _loadingOverlay = AdShowui();
 
   @override
   void initState() {
     super.initState();
-    adManager = DataSetGet.getMobUtils(context);
     feelController.addListener(showWeightController);
     _currentRecordBean = widget.recordBean; // 初始化新变量
     setState(() {
@@ -83,36 +80,8 @@ class _DetailPageState extends State<DetailPage> {
     );
   }
 
-  void showLoading() {
-    setState(() {
-      _loadingOverlay.show(context);
-    });
-  }
 
-  void hideLoading() {
-    setState(() {
-      _loadingOverlay.hide();
-    });
-  }
 
-  void showAdNextPaper(AdWhere adWhere, Function() nextJump) async {
-    if (!adManager.canShowAd(adWhere)) {
-      adManager.loadAd(adWhere);
-    }
-    setState(() {
-      _loadingOverlay.show(context);
-    });
-    DataSetGet.showScanAd(context, adWhere, 5, () {
-      setState(() {
-        _loadingOverlay.hide();
-      });
-    }, () {
-      setState(() {
-        _loadingOverlay.hide();
-      });
-      nextJump();
-    });
-  }
 
   void nextJump() {
     Navigator.pop(context);
@@ -122,9 +91,7 @@ class _DetailPageState extends State<DetailPage> {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        showAdNextPaper(AdWhere.BACKINT, () {
           nextJump();
-        });
         return false;
       },
       child: Scaffold(
@@ -150,9 +117,7 @@ class _DetailPageState extends State<DetailPage> {
                     children: [
                       GestureDetector(
                         onTap: () {
-                          showAdNextPaper(AdWhere.BACKINT, () {
                             nextJump();
-                          });
                         },
                         child: SizedBox(
                           width: 32,

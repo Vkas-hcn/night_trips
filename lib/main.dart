@@ -47,7 +47,6 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void getBack() {
-    Get2Data().getBlackList(context);
 
   }
 

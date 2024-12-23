@@ -24,14 +24,11 @@ class _RecordPageState extends State<RecordPage> {
   bool qrLoading = false;
   bool createDialog = false;
   int imgFeelState = 0;
-  late ShowAdFun adManager;
-  final AdShowui _loadingOverlay = AdShowui();
 
   @override
   void initState() {
     super.initState();
     getListData();
-    adManager = DataSetGet.getMobUtils(context);
   }
 
   @override
@@ -58,14 +55,12 @@ class _RecordPageState extends State<RecordPage> {
   }
 
   void goAddPage() {
-    showAdNextPaper(AdWhere.SAVE, () {
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => const AddPage(),
         ),
       );
-    });
   }
 
   void getStatistics() async {
@@ -81,24 +76,6 @@ class _RecordPageState extends State<RecordPage> {
     });
   }
 
-  void showAdNextPaper(AdWhere adWhere, Function() nextJump) async {
-    if (!adManager.canShowAd(adWhere)) {
-      adManager.loadAd(adWhere);
-    }
-    setState(() {
-      _loadingOverlay.show(context);
-    });
-    DataSetGet.showScanAd(context, adWhere, 5, () {
-      setState(() {
-        _loadingOverlay.hide();
-      });
-    }, () {
-      setState(() {
-        _loadingOverlay.hide();
-      });
-      nextJump();
-    });
-  }
 
   void nextJump() {
     Navigator.pop(context);
@@ -108,9 +85,7 @@ class _RecordPageState extends State<RecordPage> {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        showAdNextPaper(AdWhere.BACKINT, () {
           nextJump();
-        });
         return false;
       },
       child: Scaffold(
@@ -143,9 +118,7 @@ class _RecordPageState extends State<RecordPage> {
                         padding: const EdgeInsets.only(left: 20),
                         child: GestureDetector(
                           onTap: () {
-                            showAdNextPaper(AdWhere.BACKINT, () {
                               nextJump();
-                            });
                           },
                           child: SizedBox(
                             width: 32,

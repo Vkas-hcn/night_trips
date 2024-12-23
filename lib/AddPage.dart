@@ -38,15 +38,15 @@ class _AddPageState extends State<AddPage> {
   bool showImage = false;
   int indexBg = 0;
   bool showDialogState = false;
-  late ShowAdFun adManager;
-  final AdShowui _loadingOverlay = AdShowui();
+  // late ShowAdFun adManager;
+  // final AdShowui _loadingOverlay = AdShowui();
 
   @override
   void initState() {
     super.initState();
     setPageInFormation();
     feelController.addListener(showWeightController);
-    adManager = DataSetGet.getMobUtils(context);
+    // adManager = DataSetGet.getMobUtils(context);
   }
 
   @override
@@ -55,24 +55,6 @@ class _AddPageState extends State<AddPage> {
     super.dispose();
   }
 
-  void showAdNextPaper(AdWhere adWhere, Function() nextJump) async {
-    if (!adManager.canShowAd(adWhere)) {
-      adManager.loadAd(adWhere);
-    }
-    setState(() {
-      _loadingOverlay.show(context);
-    });
-    DataSetGet.showScanAd(context, adWhere, 5, () {
-      setState(() {
-        _loadingOverlay.hide();
-      });
-    }, () {
-      setState(() {
-        _loadingOverlay.hide();
-      });
-      nextJump();
-    });
-  }
 
   void nextJump() {
     Navigator.pop(context);
@@ -279,9 +261,9 @@ class _AddPageState extends State<AddPage> {
     formattedDate = DateFormat('yyyy/MM/dd').format(selectedDate);
     return WillPopScope(
       onWillPop: () async {
-        showAdNextPaper(AdWhere.BACKINT, () {
+        // showAdNextPaper(AdWhere.BACKINT, () {
           nextJump();
-        });
+        // });
         return false;
       },
       child: Scaffold(
@@ -308,9 +290,7 @@ class _AddPageState extends State<AddPage> {
                         padding: const EdgeInsets.only(left: 20),
                         child: GestureDetector(
                           onTap: () {
-                            showAdNextPaper(AdWhere.BACKINT, () {
                               nextJump();
-                            });
                           },
                           child: SizedBox(
                             width: 32,
@@ -670,9 +650,7 @@ class _AddPageState extends State<AddPage> {
                     padding: const EdgeInsets.only(top: 16),
                     child: GestureDetector(
                       onTap: () {
-                        showAdNextPaper(AdWhere.SAVE, () {
                           saveData();
-                        });
                       },
                       child: Container(
                         width: 243,

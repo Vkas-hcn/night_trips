@@ -25,14 +25,11 @@ class MainApp extends StatefulWidget {
 class _MainAppState extends State<MainApp> {
   bool qrLoading = false;
   bool createDialog = false;
-  late ShowAdFun adManager;
-  final AdShowui _loadingOverlay = AdShowui();
 
   @override
   void initState() {
     super.initState();
     getListData();
-    adManager = DataSetGet.getMobUtils(context);
   }
 
   @override
@@ -40,24 +37,6 @@ class _MainAppState extends State<MainApp> {
     super.dispose();
   }
 
-  void showAdNextPaper(AdWhere adWhere, Function() nextJump) async {
-    if (!adManager.canShowAd(adWhere)) {
-      adManager.loadAd(adWhere);
-    }
-    setState(() {
-      _loadingOverlay.show(context);
-    });
-    DataSetGet.showScanAd(context, adWhere, 5, () {
-      setState(() {
-        _loadingOverlay.hide();
-      });
-    }, () {
-      setState(() {
-        _loadingOverlay.hide();
-      });
-      nextJump();
-    });
-  }
 
   void getListData() async {
     await RecordManager.loadRecords();
@@ -77,7 +56,6 @@ class _MainAppState extends State<MainApp> {
   }
 
   void goRecordPage() async {
-    showAdNextPaper(AdWhere.SAVE, () {
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -86,11 +64,9 @@ class _MainAppState extends State<MainApp> {
       ).then((value) {
         getListData();
       });
-    });
   }
 
   void goAddPage() {
-    showAdNextPaper(AdWhere.SAVE, () {
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -100,18 +76,15 @@ class _MainAppState extends State<MainApp> {
         print("object--goAddPage---");
         getListData();
       });
-    });
   }
 
   void goSleepPage() {
-    showAdNextPaper(AdWhere.SAVE, () {
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => const SleepPage(),
         ),
       );
-    });
   }
 
   @override
